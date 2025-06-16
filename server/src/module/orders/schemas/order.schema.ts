@@ -1,7 +1,7 @@
 import { Type } from '@nestjs/common';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import {  Document, Types } from 'mongoose';
-import { User } from 'src/module/users/user.schema';
+import { User } from 'src/module/users/schemas/user.schema';
 
 export type OrderDocument = Order & Document;
 
