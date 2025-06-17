@@ -1,43 +1,43 @@
-import { Type } from '@nestjs/common';
+// src/module/orders/order.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import {  Document, Types } from 'mongoose';
-import { User } from 'src/module/users/schemas/user.schema';
+import { Document, Types } from 'mongoose';
 
 export type OrderDocument = Order & Document;
 
 export enum OrderStatus {
-    PENDING = 'pending',
-    ACCEPTED = 'accepted',
-    IN_DELIVERY = 'in_delivery',
-    DELIVERED = 'delivered',
-    CANCELLED = 'cancelled',
+  Pending = 'pending',
+  Confirmed = 'confirmed',
+  Preparing = 'preparing',
+  Delivered = 'delivered',
+  Cancelled = 'cancelled',
 }
 
-
-
-@Schema({ timestamps: true})
+@Schema({ timestamps: true })
 export class Order {
-    @Prop({required : true, type: Types.ObjectId, ref: 'User'})
-    customer : Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  userId: Types.ObjectId; // Client qui a passé la commande
 
+  @Prop({ type: Types.ObjectId, ref: 'Restaurant', required: true })
+  restaurantId: Types.ObjectId; // Restaurant concerné
 
-    @Prop({required : true, type: Types.ObjectId, ref: 'User'})
-    restaurant: Types.ObjectId;
+  @Prop({ type: [{ dishId: Types.ObjectId, quantity: Number, price: Number }], required: true })
+  items: {
+    dishId: Types.ObjectId;
+    quantity: number;
+    price: number; // Prix unitaire au moment de la commande
+  }[];
 
+  @Prop({ required: true })
+  totalPrice: number; // Total de la commande
 
-    @Prop({ required: true, type: [{ type : Types.ObjectId, ref: 'Dish'}] })
-    dishes: Types.ObjectId[];
+  @Prop({ enum: OrderStatus, default: OrderStatus.Pending })
+  status: OrderStatus;
 
-    @Prop({required: true})
-    totalPrice: number;
+  @Prop()
+  deliveryAddress?: string;
 
-
-    @Prop({ enum : OrderStatus, default: OrderStatus.PENDING})
-    status: OrderStatus;
-
-    @Prop()
-    deliveryAddress: string;
+  @Prop()
+  deliveryPhone?: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
-
