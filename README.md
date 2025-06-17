@@ -7,16 +7,16 @@
 ## 🛠️ Technologies utilisées
 
 ### Backend (déjà en place)
-- 🚀 [NestJS](https://nestjs.com/)
-- 🗃️ MongoDB avec [Mongoose](https://mongoosejs.com/)
-- 🔐 JWT Authentification & Autorisation
-- 🔄 RESTful API
+-  [NestJS](https://nestjs.com/)
+-  MongoDB avec [Mongoose](https://mongoosejs.com/)
+-  JWT Authentification & Autorisation
+-  RESTful API
 
 ### Frontend (à venir)
-- ⚛️ React (TypeScript)
-- 💅 TailwindCSS / Chakra UI (à définir)
-- 📦 Axios / React Query pour la communication API
-- 📊 Charts (dashboard restaurant)
+-  React (TypeScript)
+-  Le SCSS
+-  Axios / React Query pour la communication API
+-  Charts (dashboard restaurant)
 
 ---
 
