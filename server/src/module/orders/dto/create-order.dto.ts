@@ -39,4 +39,5 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   deliveryPhone?: string;
+    dishes: any;
 }
