@@ -11,6 +11,8 @@ async function bootstrap() {
     forbidNonWhitelisted: true, // renvoie une erreur si des propriétés non autorisées sont envoyées
     transform: true,        // transforme automatiquement les payloads en instances de classes DTO
   }));
+  console.log('→ process.env.MONGO_URI =', process.env.MONGO_URI);
+  console.log('__dirname:', __dirname);
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

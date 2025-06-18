@@ -1,18 +1,18 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { getMongoConfig } from './config/mongo.config';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
-
-import { AuthModule } from '../src/module/auth/auth.module';
-import { UsersModule } from '../src/module/users/users.module';
+import * as path from 'path';
+import { AuthModule } from './module/auth/auth.module';
+import { UsersModule } from './module/users/users.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: path.resolve(__dirname,'..','.env'),
+      
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -24,7 +24,7 @@ import { UsersModule } from '../src/module/users/users.module';
         }
         return {
           uri,
-          dbName: configService.get<string>('MONGO_DB_NAME') || 'fooddelevy',
+          dbName: configService.get<string>('MONGO_DB_NAME') || 'Deleveryfood',
           useNewUrlParser: true,
           useUnifiedTopology: true,
         };
@@ -36,4 +36,6 @@ import { UsersModule } from '../src/module/users/users.module';
   controllers: [AppController],
   providers: [AppService],
 })
+
+
 export class AppModule {}
