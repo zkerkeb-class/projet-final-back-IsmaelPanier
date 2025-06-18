@@ -8,6 +8,8 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RegisterDto } from '../auth/dto/register.dto';
 import * as bcrypt from 'bcryptjs';
+import { UserRole } from '../../common/enums/user-role.enum';
+
 
 @Injectable()
 export class UsersService {
@@ -16,19 +18,25 @@ export class UsersService {
   ) {}
 
   // findByEmail doit renvoyer UserDocument | null
-  async findByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ email }).exec();
-  }
+//   async findByEmail(email: string): Promise<UserDocument | null> {
+//     return this.userModel.findOne({ email }).exec();
+//   }
+
+async findByEmail(email: string): Promise<UserDocument | null> {
+  return this.userModel.findOne({ email }).select('+password').exec();
+}
+
 
   // Création d'un utilisateur : retourne UserDocument
-  async create(registerDto: RegisterDto): Promise<UserDocument> {
-  const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+async create(registerDto: RegisterDto): Promise<UserDocument> {
   const user = new this.userModel({
     ...registerDto,
-    password: hashedPassword,
+    role: registerDto.role || UserRole.User, 
   });
   return user.save();
 }
+
+
 
 
   async findAll(): Promise<UserDocument[]> {
