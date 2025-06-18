@@ -6,6 +6,8 @@ import { Model, Types } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { RegisterDto } from '../auth/dto/register.dto';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
@@ -19,10 +21,15 @@ export class UsersService {
   }
 
   // Création d'un utilisateur : retourne UserDocument
-  async create(createUserDto: CreateUserDto): Promise<UserDocument> {
-    const createdUser = new this.userModel(createUserDto);
-    return createdUser.save();
-  }
+  async create(registerDto: RegisterDto): Promise<UserDocument> {
+  const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+  const user = new this.userModel({
+    ...registerDto,
+    password: hashedPassword,
+  });
+  return user.save();
+}
+
 
   async findAll(): Promise<UserDocument[]> {
     return this.userModel.find().exec();
