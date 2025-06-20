@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Order, OrderDocument } from './schemas/order.schema';
+import { Order, OrderDocument, OrderStatus } from './schemas/order.schema';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { DishesService } from '../dishes/dishes.service';
@@ -23,7 +23,7 @@ export class OrdersService {
         try {
           return await this.dishesService.findOne(id.toString());
         } catch (e) {
-          throw new BadRequestException(`Plat non trouvé avec l’ID : ${id}`);
+          throw new BadRequestException(`Plat non trouvé avec l'ID : ${id}`);
         }
       })
     );
@@ -111,5 +111,73 @@ async getRestaurantStats(restaurantId: string) {
   };
 }
 
+// Accepter une commande
+async acceptOrder(orderId: string, restaurantId: string): Promise<Order> {
+  const order = await this.orderModel.findOne({
+    _id: new Types.ObjectId(orderId),
+    restaurantId: new Types.ObjectId(restaurantId)
+  });
+
+  if (!order) {
+    throw new NotFoundException('Commande non trouvée ou non autorisée');
+  }
+
+  if (order.status !== OrderStatus.Pending) {
+    throw new BadRequestException('Cette commande ne peut plus être acceptée');
+  }
+
+  order.status = OrderStatus.Accepted;
+  
+  return order.save();
+}
+
+// Refuser une commande
+async rejectOrder(orderId: string, restaurantId: string, reason: string): Promise<Order> {
+  const order = await this.orderModel.findOne({
+    _id: new Types.ObjectId(orderId),
+    restaurantId: new Types.ObjectId(restaurantId)
+  });
+
+  if (!order) {
+    throw new NotFoundException('Commande non trouvée ou non autorisée');
+  }
+
+  if (order.status !== OrderStatus.Pending) {
+    throw new BadRequestException('Cette commande ne peut plus être refusée');
+  }
+
+  order.status = OrderStatus.Rejected;
+  order.rejectionReason = reason;
+  
+  return order.save();
+}
+
+// Mettre à jour le statut d'une commande
+async updateStatus(orderId: string, restaurantId: string, status: string): Promise<Order> {
+  const order = await this.orderModel.findOne({
+    _id: new Types.ObjectId(orderId),
+    restaurantId: new Types.ObjectId(restaurantId)
+  });
+
+  if (!order) {
+    throw new NotFoundException('Commande non trouvée ou non autorisée');
+  }
+
+  // Vérifier la transition de statut valide
+  const validTransitions = {
+    [OrderStatus.Accepted]: [OrderStatus.Preparing],
+    [OrderStatus.Preparing]: [OrderStatus.Ready],
+    [OrderStatus.Ready]: [OrderStatus.Delivered],
+    [OrderStatus.Delivered]: [OrderStatus.Completed]
+  };
+
+  if (validTransitions[order.status] && !validTransitions[order.status].includes(status as OrderStatus)) {
+    throw new BadRequestException(`Transition de statut invalide: ${order.status} -> ${status}`);
+  }
+
+  order.status = status as OrderStatus;
+  
+  return order.save();
+}
 
 }

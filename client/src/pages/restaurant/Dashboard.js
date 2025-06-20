@@ -74,6 +74,8 @@ const RestaurantDashboard = () => {
         <ul className="sidebar-menu">
           <li><Link to="/restaurant/dashboard" className="active">Dashboard</Link></li>
           <li><Link to="/restaurant/dishes">Mes Plats</Link></li>
+          <li><Link to="/restaurant/dishes/advanced">Gestion Avancée</Link></li>
+          <li><Link to="/restaurant/orders">Commandes</Link></li>
           <li><Link to="/restaurant/profile">Profil</Link></li>
         </ul>
       </div>

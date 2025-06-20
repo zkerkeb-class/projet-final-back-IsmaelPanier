@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import NotificationBell from './NotificationBell';
+import ThemeToggle from './ThemeToggle';
 
 const Header = () => {
   const { user, logout, isAuthenticated, isRestaurant, isUser } = useAuth();
@@ -22,13 +24,30 @@ const Header = () => {
         
         <nav>
           <ul className="nav-menu">
+            {/* Routes principales toujours visibles */}
+            <li>
+              <Link to="/" className="nav-link">
+                Accueil
+              </Link>
+            </li>
+            <li>
+              <Link to="/about" className="nav-link">
+                À propos
+              </Link>
+            </li>
+            <li>
+              <Link to="/contact" className="nav-link">
+                Contact
+              </Link>
+            </li>
+
+            {/* Bouton de changement de thème */}
+            <li>
+              <ThemeToggle />
+            </li>
+
             {!isAuthenticated ? (
               <>
-                <li>
-                  <Link to="/" className="nav-link">
-                    Accueil
-                  </Link>
-                </li>
                 <li>
                   <Link to="/login" className="nav-link">
                     Connexion
@@ -53,12 +72,20 @@ const Header = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/restaurant/orders" className="nav-link">
+                    Commandes
+                  </Link>
+                </li>
+                <li>
                   <Link to="/restaurant/profile" className="nav-link">
                     Profil
                   </Link>
                 </li>
                 <li>
-                  <button onClick={handleLogout} className="nav-link" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                  <NotificationBell />
+                </li>
+                <li>
+                  <button onClick={handleLogout} className="nav-link logout-btn">
                     Déconnexion
                   </button>
                 </li>
@@ -81,7 +108,7 @@ const Header = () => {
                   </Link>
                 </li>
                 <li>
-                  <button onClick={handleLogout} className="nav-link" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                  <button onClick={handleLogout} className="nav-link logout-btn">
                     Déconnexion
                   </button>
                 </li>

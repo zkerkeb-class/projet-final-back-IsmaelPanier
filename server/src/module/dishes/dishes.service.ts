@@ -167,4 +167,208 @@ export class DishesService {
       throw new NotFoundException('Erreur lors de la suppression du plat');
     }
   }
+
+  // Méthodes pour la gestion avancée
+
+  // Récupérer les plats en promotion
+  async findPromotions(ownerId: string): Promise<Dish[]> {
+    try {
+      const restaurant = await this.dishModel.db.collection('restaurants').findOne({ 
+        ownerId: new Types.ObjectId(ownerId) 
+      });
+      
+      if (!restaurant) return [];
+
+      return await this.dishModel.find({ 
+        restaurantId: restaurant._id,
+        isPromotion: true,
+        promotionEndDate: { $gte: new Date() }
+      }).populate('restaurantId').exec();
+    } catch (error) {
+      console.error('Erreur lors de la récupération des promotions:', error);
+      return [];
+    }
+  }
+
+  // Récupérer les plats du jour
+  async findDailySpecials(ownerId: string): Promise<Dish[]> {
+    try {
+      const restaurant = await this.dishModel.db.collection('restaurants').findOne({ 
+        ownerId: new Types.ObjectId(ownerId) 
+      });
+      
+      if (!restaurant) return [];
+
+      return await this.dishModel.find({ 
+        restaurantId: restaurant._id,
+        isDailySpecial: true
+      }).populate('restaurantId').exec();
+    } catch (error) {
+      console.error('Erreur lors de la récupération des plats du jour:', error);
+      return [];
+    }
+  }
+
+  // Récupérer les plats en stock bas
+  async findLowStock(ownerId: string): Promise<Dish[]> {
+    try {
+      const restaurant = await this.dishModel.db.collection('restaurants').findOne({ 
+        ownerId: new Types.ObjectId(ownerId) 
+      });
+      
+      if (!restaurant) return [];
+
+      return await this.dishModel.find({ 
+        restaurantId: restaurant._id,
+        trackStock: true,
+        stockQuantity: { $lte: '$minStockAlert' }
+      }).populate('restaurantId').exec();
+    } catch (error) {
+      console.error('Erreur lors de la récupération des plats en stock bas:', error);
+      return [];
+    }
+  }
+
+  // Mettre à jour le stock d'un plat
+  async updateStock(id: string, quantity: number, ownerId: string): Promise<Dish> {
+    try {
+      if (!Types.ObjectId.isValid(id) || !Types.ObjectId.isValid(ownerId)) {
+        throw new ForbiddenException('ID invalide');
+      }
+      
+      const dish = await this.dishModel.findById(id).populate({
+        path: 'restaurantId',
+        match: { ownerId: new Types.ObjectId(ownerId) }
+      }).exec();
+
+      if (!dish || !dish.restaurantId) {
+        throw new ForbiddenException('Vous ne pouvez pas modifier ce plat');
+      }
+
+      if (!dish.trackStock) {
+        throw new Error('Ce plat ne suit pas le stock');
+      }
+
+      const updatedDish = await this.dishModel.findByIdAndUpdate(
+        id, 
+        { stockQuantity: quantity }, 
+        { new: true }
+      ).exec();
+
+      if (!updatedDish) throw new NotFoundException('Plat non trouvé');
+      return updatedDish;
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+        throw error;
+      }
+      console.error('Erreur lors de la mise à jour du stock:', error);
+      throw new NotFoundException('Erreur lors de la mise à jour du stock');
+    }
+  }
+
+  // Rechercher des plats par nom ou description
+  async searchDishes(ownerId: string, searchTerm: string): Promise<Dish[]> {
+    try {
+      const restaurant = await this.dishModel.db.collection('restaurants').findOne({ 
+        ownerId: new Types.ObjectId(ownerId) 
+      });
+      
+      if (!restaurant) return [];
+
+      const regex = new RegExp(searchTerm, 'i');
+      return await this.dishModel.find({ 
+        restaurantId: restaurant._id,
+        $or: [
+          { name: regex },
+          { description: regex },
+          { tags: regex }
+        ]
+      }).populate('restaurantId').exec();
+    } catch (error) {
+      console.error('Erreur lors de la recherche de plats:', error);
+      return [];
+    }
+  }
+
+  // Récupérer les statistiques des plats
+  async getDishStats(ownerId: string): Promise<any> {
+    try {
+      const restaurant = await this.dishModel.db.collection('restaurants').findOne({ 
+        ownerId: new Types.ObjectId(ownerId) 
+      });
+      
+      if (!restaurant) return {};
+
+      const stats = await this.dishModel.aggregate([
+        { $match: { restaurantId: restaurant._id } },
+        {
+          $group: {
+            _id: null,
+            totalDishes: { $sum: 1 },
+            availableDishes: { $sum: { $cond: ['$isAvailable', 1, 0] } },
+            dailySpecials: { $sum: { $cond: ['$isDailySpecial', 1, 0] } },
+            promotions: { $sum: { $cond: ['$isPromotion', 1, 0] } },
+            lowStockDishes: {
+              $sum: {
+                $cond: [
+                  { $and: ['$trackStock', { $lte: ['$stockQuantity', '$minStockAlert'] }] },
+                  1,
+                  0
+                ]
+              }
+            },
+            averagePrice: { $avg: '$basePrice' },
+            totalViews: { $sum: '$viewCount' }
+          }
+        }
+      ]);
+
+      return stats[0] || {};
+    } catch (error) {
+      console.error('Erreur lors de la récupération des statistiques:', error);
+      return {};
+    }
+  }
+
+  // Incrémenter le compteur de vues
+  async incrementViewCount(id: string): Promise<void> {
+    try {
+      await this.dishModel.findByIdAndUpdate(id, { $inc: { viewCount: 1 } }).exec();
+    } catch (error) {
+      console.error('Erreur lors de l\'incrémentation des vues:', error);
+    }
+  }
+
+  // Marquer un plat comme populaire
+  async togglePopular(id: string, ownerId: string): Promise<Dish> {
+    try {
+      if (!Types.ObjectId.isValid(id) || !Types.ObjectId.isValid(ownerId)) {
+        throw new ForbiddenException('ID invalide');
+      }
+      
+      const dish = await this.dishModel.findById(id).populate({
+        path: 'restaurantId',
+        match: { ownerId: new Types.ObjectId(ownerId) }
+      }).exec();
+
+      if (!dish || !dish.restaurantId) {
+        throw new ForbiddenException('Vous ne pouvez pas modifier ce plat');
+      }
+
+      const updatedDish = await this.dishModel.findByIdAndUpdate(
+        id, 
+        { isPopular: !dish.isPopular }, 
+        { new: true }
+      ).exec();
+
+      if (!updatedDish) throw new NotFoundException('Plat non trouvé');
+      return updatedDish;
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+        throw error;
+      }
+      console.error('Erreur lors du changement de statut populaire:', error);
+      throw new NotFoundException('Erreur lors de la modification');
+    }
+  }
 }

@@ -1,38 +1,89 @@
 // src/module/orders/orders.controller.ts
 
-import { Controller, Get, Post, Body, Param, Delete, Put, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, Query, UseGuards, Request } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { FilterOrderDto } from './dto/filter-order.dto';
-
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.gard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
-  create(@Body() dto: CreateOrderDto) {
-    return this.ordersService.create(dto);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.User)
+  create(@Body() dto: CreateOrderDto, @Request() req) {
+    return this.ordersService.create({ ...dto, userId: req.user.id });
   }
 
   @Get()
-  findAll(@Query() filter: FilterOrderDto) {
-    return this.ordersService.findAll(filter);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.User, UserRole.RESTAURANT)
+  findAll(@Query() filter: FilterOrderDto, @Request() req) {
+    if (req.user.role === UserRole.RESTAURANT) {
+      return this.ordersService.findByRestaurant(req.user.id);
+    }
+    return this.ordersService.findByUser(req.user.id);
+  }
+
+  @Get('restaurant')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.RESTAURANT)
+  findByRestaurant(@Request() req) {
+    return this.ordersService.findByRestaurant(req.user.id);
+  }
+
+  @Get('user')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.User)
+  findByUser(@Request() req) {
+    return this.ordersService.findByUser(req.user.id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.User, UserRole.RESTAURANT)
+  findOne(@Param('id') id: string, @Request() req) {
     return this.ordersService.findOne(id);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateOrderDto) {
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.User, UserRole.RESTAURANT)
+  update(@Param('id') id: string, @Body() dto: UpdateOrderDto, @Request() req) {
     return this.ordersService.update(id, dto);
   }
 
+  @Put(':id/accept')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.RESTAURANT)
+  acceptOrder(@Param('id') id: string, @Request() req) {
+    return this.ordersService.acceptOrder(id, req.user.id);
+  }
+
+  @Put(':id/reject')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.RESTAURANT)
+  rejectOrder(@Param('id') id: string, @Body() body: { reason: string }, @Request() req) {
+    return this.ordersService.rejectOrder(id, req.user.id, body.reason);
+  }
+
+  @Put(':id/status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.RESTAURANT)
+  updateStatus(@Param('id') id: string, @Body() body: { status: string }, @Request() req) {
+    return this.ordersService.updateStatus(id, req.user.id, body.status);
+  }
+
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.User, UserRole.RESTAURANT)
+  remove(@Param('id') id: string, @Request() req) {
     return this.ordersService.remove(id);
   }
 }

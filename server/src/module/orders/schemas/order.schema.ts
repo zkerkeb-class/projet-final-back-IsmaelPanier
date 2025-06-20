@@ -6,9 +6,13 @@ export type OrderDocument = Order & Document;
 
 export enum OrderStatus {
   Pending = 'pending',
+  Accepted = 'accepted',
   Confirmed = 'confirmed',
   Preparing = 'preparing',
+  Ready = 'ready',
   Delivered = 'delivered',
+  Completed = 'completed',
+  Rejected = 'rejected',
   Cancelled = 'cancelled',
 }
 
@@ -32,6 +36,9 @@ export class Order {
 
   @Prop({ enum: OrderStatus, default: OrderStatus.Pending })
   status: OrderStatus;
+
+  @Prop()
+  rejectionReason?: string; // Raison du refus si la commande est rejetée
 
   @Prop()
   deliveryAddress?: string;
