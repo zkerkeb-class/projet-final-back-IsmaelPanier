@@ -13,6 +13,29 @@ export class RestaurantService {
     private readonly restaurantModel: Model<RestaurantDocument>,
   ) {}
 
+  // Récupérer tous les restaurants (pour les utilisateurs)
+  async getAllRestaurants(): Promise<Restaurant[]> {
+    const restaurants = await this.restaurantModel.find().exec();
+    console.log('📋 Tous les restaurants récupérés:', restaurants.length);
+    return restaurants;
+  }
+
+  // Récupérer un restaurant par ID (pour les utilisateurs)
+  async getRestaurantById(id: string): Promise<Restaurant> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid restaurant ID');
+    }
+
+    const restaurant = await this.restaurantModel.findById(id).exec();
+    
+    if (!restaurant) {
+      throw new NotFoundException('Restaurant non trouvé');
+    }
+
+    console.log('📋 Restaurant récupéré par ID:', id);
+    return restaurant;
+  }
+
   async createRestaurant(dto: CreateRestaurantDto, ownerId: string): Promise<Restaurant> {
     if (!Types.ObjectId.isValid(ownerId)) {
       throw new BadRequestException('Invalid ownerId');

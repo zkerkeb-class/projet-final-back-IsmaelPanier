@@ -1,9 +1,9 @@
-import { IsNotEmpty, IsOptional, IsString, IsNumber, IsArray } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsNumber, IsArray, IsBoolean, IsEnum, Min, Max, IsUrl } from 'class-validator';
 
 export class CreateDishDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  restaurantId: string;
+  restaurantId?: string;
 
   @IsNotEmpty()
   @IsString()
@@ -15,10 +15,49 @@ export class CreateDishDto {
 
   @IsNotEmpty()
   @IsNumber()
+  @Min(0)
   price: number;
+
+  @IsOptional()
+  @IsEnum(['Entrée', 'Plat principal', 'Dessert', 'Boisson', 'Accompagnement'])
+  category?: string;
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  elements?: string[];
+  ingredients?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  allergens?: string[];
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  preparationTime?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isAvailable?: boolean;
+
+  @IsOptional()
+  @IsUrl()
+  imageUrl?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(5)
+  rating?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  orderCount?: number;
 }
