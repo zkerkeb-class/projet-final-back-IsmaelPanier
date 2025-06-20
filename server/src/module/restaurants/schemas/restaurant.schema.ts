@@ -20,6 +20,8 @@ export class Restaurant {
 
   @Prop()
   phone?: string;
+
+  
 }
 
 export const RestaurantSchema = SchemaFactory.createForClass(Restaurant);

@@ -12,7 +12,7 @@ import { AuthController } from './auth.controller';
     UsersModule,
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'secretKey', // mettre en .env
+      secret: process.env.JWT_SECRET || 'TaCleSecreteSuperLongueEtComplexe123!', // mettre en .env
       signOptions: { expiresIn: '1d' },
     }),
   ],

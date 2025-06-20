@@ -8,7 +8,7 @@ import { UpdateDishDto } from './dto/update-dish.dto';
 export class DishesController {
     constructor(private readonly dishesService: DishesService ) {}
 
-      @Post()
+      @Post('me')
   create(@Body() dto: CreateDishDto) {
     return this.dishesService.create(dto);
   }
