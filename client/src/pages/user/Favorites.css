@@ -1,0 +1,358 @@
+/* Styles pour la page Favorites */
+.search-section {
+  background: var(--bg-card);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-light);
+  margin-bottom: var(--spacing-xl);
+  border: 1px solid var(--border-color);
+}
+
+.search-input {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-md);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: var(--transition-normal);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* Onglets */
+.tabs-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.tabs {
+  display: flex;
+  gap: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tab {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  border-bottom: 2px solid transparent;
+}
+
+.tab:hover {
+  color: var(--text-primary);
+}
+
+.tab.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+/* Grille des favoris */
+.favorites-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.favorite-card {
+  background: var(--bg-card);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-light);
+  transition: var(--transition-normal);
+  border: 1px solid var(--border-color);
+  position: relative;
+}
+
+.favorite-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-medium);
+}
+
+.favorite-image {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+.favorite-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: var(--transition-normal);
+}
+
+.favorite-card:hover .favorite-image img {
+  transform: scale(1.05);
+}
+
+.remove-favorite-btn {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  z-index: 2;
+}
+
+.remove-favorite-btn:hover {
+  background: rgba(231, 76, 60, 0.1);
+  transform: scale(1.1);
+}
+
+.status-badge {
+  position: absolute;
+  top: var(--spacing-sm);
+  left: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  z-index: 2;
+}
+
+.status-badge.open {
+  background: var(--success-color);
+  color: var(--text-light);
+}
+
+.status-badge.closed {
+  background: var(--danger-color);
+  color: var(--text-light);
+}
+
+.badge {
+  position: absolute;
+  top: var(--spacing-sm);
+  left: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-light);
+}
+
+.badge.special {
+  background: var(--warning-color);
+}
+
+.badge.promotion {
+  background: var(--danger-color);
+}
+
+.favorite-info {
+  padding: var(--spacing-lg);
+}
+
+.favorite-info h3 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.cuisine-type {
+  color: var(--primary-color);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-sm);
+}
+
+.restaurant-name {
+  color: var(--primary-color);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-sm);
+}
+
+.restaurant-meta {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.rating, .price-range, .delivery-time {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.rating {
+  color: var(--warning-color);
+}
+
+.dish-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.price {
+  font-weight: var(--font-weight-bold);
+  color: var(--primary-color);
+  font-size: var(--font-size-lg);
+}
+
+.original-price {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+  margin-right: var(--spacing-sm);
+}
+
+.discounted-price {
+  color: var(--danger-color);
+}
+
+.preparation-time {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.description {
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-sm);
+}
+
+.favorite-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.favorite-actions .btn {
+  flex: 1;
+  margin-right: var(--spacing-md);
+}
+
+.min-order, .category {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* État vide */
+.no-favorites {
+  text-align: center;
+  padding: var(--spacing-xxl);
+  background: var(--bg-card);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border-color);
+}
+
+.no-favorites-icon {
+  font-size: 4rem;
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.5;
+}
+
+.no-favorites h3 {
+  font-size: var(--font-size-xl);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.no-favorites p {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-md);
+}
+
+.favorites-summary {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--bg-card);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--border-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .tabs {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .tab {
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
+  }
+
+  .tab.active {
+    border-bottom-color: var(--primary-color);
+  }
+
+  .favorites-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .restaurant-meta {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .favorite-actions {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .favorite-actions .btn {
+    margin-right: 0;
+    width: 100%;
+  }
+
+  .min-order, .category {
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .favorite-image {
+    height: 150px;
+  }
+
+  .favorite-info {
+    padding: var(--spacing-md);
+  }
+
+  .favorite-info h3 {
+    font-size: var(--font-size-lg);
+  }
+
+  .no-favorites-icon {
+    font-size: 3rem;
+  }
+
+  .no-favorites h3 {
+    font-size: var(--font-size-lg);
+  }
+} 

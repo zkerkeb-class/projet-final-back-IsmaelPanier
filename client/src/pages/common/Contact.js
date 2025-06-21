@@ -160,9 +160,9 @@ const Contact = () => {
                 <div className="contact-info-item">
                   <div className="contact-icon">📧</div>
                   <div className="contact-details">
-                    <h3>Email</h3>
-                    <p>contact@fooddelivery.com</p>
-                    <p>support@fooddelivery.com</p>
+                    <h4>Email</h4>
+                    <p>contact@fooddelivery-plus.com</p>
+                    <p>support@fooddelivery-plus.com</p>
                   </div>
                 </div>
 

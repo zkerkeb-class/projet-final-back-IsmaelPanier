@@ -4,6 +4,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
+import { Favorite, FavoriteDocument } from './schemas/favorite.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RegisterDto } from '../auth/dto/register.dto';
@@ -15,6 +16,7 @@ import { UserRole } from '../../common/enums/user-role.enum';
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Favorite.name) private favoriteModel: Model<FavoriteDocument>,
   ) {}
 
   // findByEmail doit renvoyer UserDocument | null
@@ -61,5 +63,65 @@ async create(registerDto: RegisterDto): Promise<UserDocument> {
   async delete(id: string): Promise<{ deleted: boolean }> {
     const result = await this.userModel.deleteOne({ _id: id }).exec();
     return { deleted: result.deletedCount > 0 };
+  }
+
+  // Méthodes pour les favoris
+  async getFavorites(userId: string) {
+    return this.favoriteModel.find({ userId })
+      .populate('restaurantId')
+      .populate('dishId')
+      .populate({
+        path: 'dishId',
+        populate: {
+          path: 'restaurantId',
+          model: 'Restaurant'
+        }
+      })
+      .exec();
+  }
+
+  async addFavorite(userId: string, restaurantId?: string, dishId?: string) {
+    if (!restaurantId && !dishId) {
+      throw new Error('Either restaurantId or dishId must be provided');
+    }
+
+    const type = restaurantId ? 'restaurant' : 'dish';
+    const favoriteData = {
+      userId: new Types.ObjectId(userId),
+      type,
+      ...(restaurantId && { restaurantId: new Types.ObjectId(restaurantId) }),
+      ...(dishId && { dishId: new Types.ObjectId(dishId) })
+    };
+
+    const favorite = new this.favoriteModel(favoriteData);
+    return favorite.save();
+  }
+
+  async removeFavorite(userId: string, restaurantId?: string, dishId?: string) {
+    const filter: any = { userId: new Types.ObjectId(userId) };
+    
+    if (restaurantId) {
+      filter.restaurantId = new Types.ObjectId(restaurantId);
+    }
+    if (dishId) {
+      filter.dishId = new Types.ObjectId(dishId);
+    }
+
+    const result = await this.favoriteModel.deleteOne(filter).exec();
+    return { deleted: result.deletedCount > 0 };
+  }
+
+  async isFavorite(userId: string, restaurantId?: string, dishId?: string): Promise<boolean> {
+    const filter: any = { userId: new Types.ObjectId(userId) };
+    
+    if (restaurantId) {
+      filter.restaurantId = new Types.ObjectId(restaurantId);
+    }
+    if (dishId) {
+      filter.dishId = new Types.ObjectId(dishId);
+    }
+
+    const favorite = await this.favoriteModel.findOne(filter).exec();
+    return !!favorite;
   }
 }

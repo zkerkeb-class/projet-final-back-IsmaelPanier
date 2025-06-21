@@ -18,7 +18,7 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.User)
   create(@Body() dto: CreateOrderDto, @Request() req) {
-    return this.ordersService.create({ ...dto, userId: req.user.id });
+    return this.ordersService.create({ ...dto, userId: req.user.userId });
   }
 
   @Get()
@@ -26,23 +26,23 @@ export class OrdersController {
   @Roles(UserRole.User, UserRole.RESTAURANT)
   findAll(@Query() filter: FilterOrderDto, @Request() req) {
     if (req.user.role === UserRole.RESTAURANT) {
-      return this.ordersService.findByRestaurant(req.user.id);
+      return this.ordersService.findByRestaurant(req.user.userId);
     }
-    return this.ordersService.findByUser(req.user.id);
+    return this.ordersService.findByUser(req.user.userId);
   }
 
   @Get('restaurant')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.RESTAURANT)
   findByRestaurant(@Request() req) {
-    return this.ordersService.findByRestaurant(req.user.id);
+    return this.ordersService.findByRestaurant(req.user.userId);
   }
 
   @Get('user')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.User)
   findByUser(@Request() req) {
-    return this.ordersService.findByUser(req.user.id);
+    return this.ordersService.findByUser(req.user.userId);
   }
 
   @Get(':id')
@@ -63,21 +63,28 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.RESTAURANT)
   acceptOrder(@Param('id') id: string, @Request() req) {
-    return this.ordersService.acceptOrder(id, req.user.id);
+    return this.ordersService.acceptOrder(id, req.user.userId);
   }
 
   @Put(':id/reject')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.RESTAURANT)
   rejectOrder(@Param('id') id: string, @Body() body: { reason: string }, @Request() req) {
-    return this.ordersService.rejectOrder(id, req.user.id, body.reason);
+    return this.ordersService.rejectOrder(id, req.user.userId, body.reason);
+  }
+
+  @Put(':id/cancel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.User)
+  cancelOrder(@Param('id') id: string, @Request() req) {
+    return this.ordersService.cancelOrder(id, req.user.userId);
   }
 
   @Put(':id/status')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.RESTAURANT)
   updateStatus(@Param('id') id: string, @Body() body: { status: string }, @Request() req) {
-    return this.ordersService.updateStatus(id, req.user.id, body.status);
+    return this.ordersService.updateStatus(id, req.user.userId, body.status);
   }
 
   @Delete(':id')

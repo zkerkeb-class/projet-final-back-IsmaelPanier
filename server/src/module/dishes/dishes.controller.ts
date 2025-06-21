@@ -23,6 +23,12 @@ export class DishesController {
       : this.dishesService.findAll();
   }
 
+  // Route publique pour obtenir les plats d'un restaurant spécifique
+  @Get('restaurant/:restaurantId')
+  findByRestaurant(@Param('restaurantId') restaurantId: string) {
+    return this.dishesService.findByRestaurant(restaurantId);
+  }
+
   // Route protégée pour que le restaurant connecté voie ses propres plats
   @Get('my-dishes')
   @UseGuards(JwtAuthGuard, RolesGuard)

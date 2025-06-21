@@ -2,9 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/exceptions/http-exception/http-exception.filter';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   
   // Configuration CORS pour permettre les requêtes depuis le frontend sur le port 3000
   app.enableCors({
@@ -12,6 +14,11 @@ async function bootstrap() {
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  });
+  
+  // Configuration pour servir les fichiers statiques (uploads)
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
   });
   
   app.useGlobalFilters( new HttpExceptionFilter());
@@ -27,6 +34,7 @@ async function bootstrap() {
   console.log('__dirname:', __dirname);
   console.log(`🚀 Serveur démarré sur le port: ${port}`);
   console.log(`🌐 CORS activé pour: http://localhost:3000`);
+  console.log(`📁 Fichiers statiques servis depuis: /uploads/`);
   await app.listen(port);
 }
 bootstrap();

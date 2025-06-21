@@ -8,10 +8,10 @@ const About = () => {
       {/* Hero Section */}
       <section className="about-hero">
         <div className="container">
-          <h1 className="about-title">À propos de FoodDelivery</h1>
-          <p className="about-subtitle">
-            Votre plateforme de livraison de nourriture préférée
-          </p>
+          <div className="about-header">
+            <h1 className="about-title">À propos de FoodDelivery+</h1>
+            <p className="about-subtitle">Votre partenaire de confiance pour la livraison de nourriture</p>
+          </div>
         </div>
       </section>
 
@@ -22,7 +22,7 @@ const About = () => {
             <div className="mission-text">
               <h2>Notre Mission</h2>
               <p>
-                Chez FoodDelivery, nous croyons que la bonne nourriture devrait être accessible à tous, 
+                Chez FoodDelivery+, nous croyons que la bonne nourriture devrait être accessible à tous, 
                 partout et à tout moment. Notre mission est de connecter les restaurants locaux avec 
                 leurs clients de manière simple, rapide et fiable.
               </p>
@@ -166,9 +166,9 @@ const About = () => {
       <section className="contact-section">
         <div className="container">
           <div className="contact-content">
-            <h2>En savoir plus</h2>
+            <h2>Contactez-nous</h2>
             <p>
-              Vous souhaitez en savoir plus sur FoodDelivery ou devenir partenaire ? 
+              Vous souhaitez en savoir plus sur FoodDelivery+ ou devenir partenaire ? 
               N'hésitez pas à nous contacter !
             </p>
             <div className="contact-actions">

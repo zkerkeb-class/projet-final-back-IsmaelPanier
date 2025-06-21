@@ -18,9 +18,11 @@ const Header = () => {
   return (
     <header className="header">
       <div className="header-container">
-        <Link to="/" className="logo">
-          🍕 FoodDelivery
-        </Link>
+        <div className="logo">
+          <Link to="/">
+            🍕 FoodDelivery+
+          </Link>
+        </div>
         
         <nav>
           <ul className="nav-menu">

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import './styles/theme.css';
@@ -20,6 +20,10 @@ import OrderManagement from './pages/restaurant/OrderManagement';
 // Pages User
 import UserDashboard from './pages/user/Dashboard';
 import RestaurantList from './pages/user/RestaurantList';
+import RestaurantMenu from './pages/user/RestaurantMenu';
+import OrderTracking from './pages/user/OrderTracking';
+import OrderHistory from './pages/user/OrderHistory';
+import Favorites from './pages/user/Favorites';
 import UserProfile from './pages/user/Profile';
 
 // Composants communs
@@ -31,13 +35,15 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 
-// Message de démarrage de l'application
-console.log('🚀 Application FoodDelivery démarrée');
-console.log('🌐 Frontend accessible sur: http://localhost:3000');
-console.log('🔗 Backend API sur: http://localhost:5000');
-console.log('🎨 Système de thème clair/sombre activé');
-
 function App() {
+  // Message de démarrage de l'application
+  useEffect(() => {
+    console.log('🚀 Application FoodDelivery+ démarrée');
+    console.log('🌐 Frontend accessible sur: http://localhost:3000');
+    console.log('🔗 Backend API sur: http://localhost:5000');
+    console.log('🎨 Système de thème clair/sombre activé');
+  }, []);
+
   return (
     <ThemeProvider>
       <AuthProvider>
@@ -89,6 +95,26 @@ function App() {
                 <Route path="/user/restaurants" element={
                   <ProtectedRoute requiredRole="user">
                     <RestaurantList />
+                  </ProtectedRoute>
+                } />
+                <Route path="/user/restaurant/:restaurantId" element={
+                  <ProtectedRoute requiredRole="user">
+                    <RestaurantMenu />
+                  </ProtectedRoute>
+                } />
+                <Route path="/user/orders" element={
+                  <ProtectedRoute requiredRole="user">
+                    <OrderHistory />
+                  </ProtectedRoute>
+                } />
+                <Route path="/user/orders/:orderId" element={
+                  <ProtectedRoute requiredRole="user">
+                    <OrderTracking />
+                  </ProtectedRoute>
+                } />
+                <Route path="/user/favorites" element={
+                  <ProtectedRoute requiredRole="user">
+                    <Favorites />
                   </ProtectedRoute>
                 } />
                 <Route path="/user/profile" element={

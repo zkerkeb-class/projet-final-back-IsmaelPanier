@@ -1,5 +1,5 @@
-import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, BadRequestException } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Controller, Post, UseInterceptors, UploadedFile, UploadedFiles, UseGuards, BadRequestException } from '@nestjs/common';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,6 +7,19 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.gard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
+
+// Définition du type pour les fichiers Multer
+interface MulterFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  destination: string;
+  filename: string;
+  path: string;
+  buffer: Buffer;
+}
 
 @Controller('uploads')
 export class UploadController {
@@ -33,7 +46,7 @@ export class UploadController {
       },
     }),
   )
-  async uploadDishImage(@UploadedFile() file: Express.Multer.File) {
+  async uploadDishImage(@UploadedFile() file: MulterFile) {
     if (!file) {
       throw new BadRequestException('Aucun fichier fourni');
     }
@@ -54,7 +67,7 @@ export class UploadController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.RESTAURANT)
   @UseInterceptors(
-    FileInterceptor('images', {
+    FilesInterceptor('images', 10, {
       storage: diskStorage({
         destination: './uploads/dishes',
         filename: (req, file, cb) => {
@@ -73,7 +86,7 @@ export class UploadController {
       },
     }),
   )
-  async uploadMultipleDishImages(@UploadedFile() files: Express.Multer.File[]) {
+  async uploadMultipleDishImages(@UploadedFiles() files: MulterFile[]) {
     if (!files || files.length === 0) {
       throw new BadRequestException('Aucun fichier fourni');
     }

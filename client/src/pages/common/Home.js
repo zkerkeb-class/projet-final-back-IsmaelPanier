@@ -12,7 +12,7 @@ const Home = () => {
       <section className="hero-section">
         <div className="hero-content">
           <h1 className="hero-title">
-            🍕 FoodDelivery
+            🍕 FoodDelivery+
             <span className="hero-subtitle">La livraison de nourriture simplifiée</span>
           </h1>
           <p className="hero-description">
@@ -46,7 +46,7 @@ const Home = () => {
       {/* Features Section */}
       <section className="features-section">
         <div className="container">
-          <h2 className="section-title">Pourquoi choisir FoodDelivery ?</h2>
+          <h2 className="section-title">Pourquoi choisir FoodDelivery+ ?</h2>
           <div className="features-grid">
             <div className="feature-card">
               <div className="feature-icon">🚀</div>

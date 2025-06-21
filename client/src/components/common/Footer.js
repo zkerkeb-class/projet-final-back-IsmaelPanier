@@ -8,8 +8,8 @@ const Footer = () => {
     <footer className="footer">
       <div className="footer-content">
         <div className="footer-section">
-          <h3>🍕 FoodDelivery</h3>
-          <p>La livraison de nourriture simplifiée</p>
+          <h3>🍕 FoodDelivery+</h3>
+          <p>Votre plateforme de livraison de nourriture préférée</p>
           <div className="social-links">
             <a href="#" className="social-link" title="Facebook">📘</a>
             <a href="#" className="social-link" title="Twitter">🐦</a>
@@ -50,7 +50,7 @@ const Footer = () => {
       </div>
 
       <div className="footer-bottom">
-        <p>&copy; {currentYear} FoodDelivery. Tous droits réservés.</p>
+        <p>&copy; {currentYear} FoodDelivery+. Tous droits réservés.</p>
         <p>Développé avec ❤️ par Ismael Panier</p>
       </div>
     </footer>

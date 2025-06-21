@@ -6,7 +6,7 @@ const LandingPage = () => {
     <div className="landing-page">
       <div className="hero-section">
         <div className="hero-content">
-          <h1 className="hero-title">🍕 FoodDelivery</h1>
+          <h1 className="hero-title">🍕 FoodDelivery+</h1>
           <p className="hero-subtitle">
             La meilleure plateforme de livraison de nourriture
           </p>

@@ -15,6 +15,9 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.gard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 @Controller('users')
 export class UsersController {
@@ -48,7 +51,7 @@ export class UsersController {
     @UseGuards(JwtAuthGuard)
     @Put('profile')
     async updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto) {
-        const userId = req.user.id;
+        const userId = req.user.userId;
         const updatedUser = await this.UsersService.update(userId, updateUserDto);
         return {
             success: true,
@@ -67,5 +70,71 @@ export class UsersController {
     @Delete(':id')
     async remove(@Param('id') id: string) {
         return await this.UsersService.delete(id);
+    }
+
+    // Routes pour les favoris
+    @Get('favorites')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.User)
+    async getFavorites(@Request() req) {
+        const userId = req.user.userId;
+        const favorites = await this.UsersService.getFavorites(userId);
+        return {
+            success: true,
+            data: favorites,
+            message: 'Favoris récupérés avec succès',
+        };
+    }
+
+    @Post('favorites/:restaurantId')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.User)
+    async addRestaurantToFavorites(@Request() req, @Param('restaurantId') restaurantId: string) {
+        const userId = req.user.userId;
+        const favorite = await this.UsersService.addFavorite(userId, restaurantId);
+        return {
+            success: true,
+            data: favorite,
+            message: 'Restaurant ajouté aux favoris',
+        };
+    }
+
+    @Post('favorites/dish/:dishId')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.User)
+    async addDishToFavorites(@Request() req, @Param('dishId') dishId: string) {
+        const userId = req.user.userId;
+        const favorite = await this.UsersService.addFavorite(userId, undefined, dishId);
+        return {
+            success: true,
+            data: favorite,
+            message: 'Plat ajouté aux favoris',
+        };
+    }
+
+    @Delete('favorites/:restaurantId')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.User)
+    async removeRestaurantFromFavorites(@Request() req, @Param('restaurantId') restaurantId: string) {
+        const userId = req.user.userId;
+        const result = await this.UsersService.removeFavorite(userId, restaurantId);
+        return {
+            success: true,
+            data: result,
+            message: 'Restaurant retiré des favoris',
+        };
+    }
+
+    @Delete('favorites/dish/:dishId')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.User)
+    async removeDishFromFavorites(@Request() req, @Param('dishId') dishId: string) {
+        const userId = req.user.userId;
+        const result = await this.UsersService.removeFavorite(userId, undefined, dishId);
+        return {
+            success: true,
+            data: result,
+            message: 'Plat retiré des favoris',
+        };
     }
 }

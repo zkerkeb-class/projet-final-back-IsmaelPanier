@@ -152,6 +152,26 @@ async rejectOrder(orderId: string, restaurantId: string, reason: string): Promis
   return order.save();
 }
 
+// Annuler une commande (par l'utilisateur)
+async cancelOrder(orderId: string, userId: string): Promise<Order> {
+  const order = await this.orderModel.findOne({
+    _id: new Types.ObjectId(orderId),
+    userId: new Types.ObjectId(userId)
+  });
+
+  if (!order) {
+    throw new NotFoundException('Commande non trouvée ou non autorisée');
+  }
+
+  if (order.status !== OrderStatus.Pending) {
+    throw new BadRequestException('Cette commande ne peut plus être annulée');
+  }
+
+  order.status = OrderStatus.Cancelled;
+  
+  return order.save();
+}
+
 // Mettre à jour le statut d'une commande
 async updateStatus(orderId: string, restaurantId: string, status: string): Promise<Order> {
   const order = await this.orderModel.findOne({
