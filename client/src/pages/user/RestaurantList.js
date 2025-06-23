@@ -6,7 +6,7 @@ import './RestaurantList.css';
 const API_BASE_URL = 'http://localhost:5000';
 
 const RestaurantList = () => {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,45 +33,45 @@ const RestaurantList = () => {
 
   // Récupérer les restaurants
   useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/restaurant`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setRestaurants(data);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération des restaurants:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchFavorites = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/favorites`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setFavorites(data.map(fav => fav.restaurantId));
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération des favoris:', error);
+      }
+    };
+
     fetchRestaurants();
     fetchFavorites();
-  }, []);
-
-  const fetchRestaurants = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/restaurants`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setRestaurants(data);
-      }
-    } catch (error) {
-      console.error('Erreur lors de la récupération des restaurants:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchFavorites = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/favorites`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setFavorites(data.map(fav => fav.restaurantId));
-      }
-    } catch (error) {
-      console.error('Erreur lors de la récupération des favoris:', error);
-    }
-  };
+  }, [token]);
 
   const toggleFavorite = async (restaurantId) => {
     try {

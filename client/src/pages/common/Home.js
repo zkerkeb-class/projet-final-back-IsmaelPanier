@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import './Home.css';
 
 const Home = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   return (
     <div className="home-page">

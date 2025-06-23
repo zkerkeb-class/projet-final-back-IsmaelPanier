@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './OrderHistory.css';
@@ -6,7 +6,7 @@ import './OrderHistory.css';
 const API_BASE_URL = 'http://localhost:5000';
 
 const OrderHistory = () => {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,11 +36,7 @@ const OrderHistory = () => {
     { value: 'year', label: 'Cette année' }
   ];
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/orders/user`, {
         headers: {
@@ -57,7 +53,11 @@ const OrderHistory = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   // Filtrer les commandes
   const filteredOrders = orders.filter(order => {

@@ -25,7 +25,7 @@ const RestaurantMenu = () => {
     const fetchRestaurantData = async () => {
       try {
         // Récupérer les infos du restaurant
-        const restaurantResponse = await fetch(`${API_BASE_URL}/restaurants/${restaurantId}`, {
+        const restaurantResponse = await fetch(`${API_BASE_URL}/restaurant/${restaurantId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

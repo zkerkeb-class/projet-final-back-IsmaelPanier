@@ -1,327 +1,183 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import './Favorites.css';
 
-const API_BASE_URL = 'http://localhost:5000';
-
 const Favorites = () => {
-  const { user, token } = useAuth();
-  const [favorites, setFavorites] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('restaurants');
-  const [searchTerm, setSearchTerm] = useState('');
-
-  useEffect(() => {
-    fetchFavorites();
-  }, []);
-
-  const fetchFavorites = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/favorites`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setFavorites(data);
-      }
-    } catch (error) {
-      console.error('Erreur lors de la récupération des favoris:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const removeFavorite = async (favoriteId) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/favorites/${favoriteId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        setFavorites(favorites.filter(fav => fav._id !== favoriteId));
-      }
-    } catch (error) {
-      console.error('Erreur lors de la suppression du favori:', error);
-    }
-  };
-
-  // Filtrer les favoris
-  const filteredFavorites = favorites.filter(favorite => {
-    const matchesSearch = favorite.restaurant?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         favorite.dish?.name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTab = activeTab === 'restaurants' ? favorite.type === 'restaurant' : favorite.type === 'dish';
-    return matchesSearch && matchesTab;
+  const [favorites, setFavorites] = useState({
+    restaurants: [],
+    dishes: []
   });
 
-  const restaurantFavorites = filteredFavorites.filter(fav => fav.type === 'restaurant');
-  const dishFavorites = filteredFavorites.filter(fav => fav.type === 'dish');
-
-  const getPriceRangeText = (priceRange) => {
-    switch (priceRange) {
-      case 'low': return '€';
-      case 'medium': return '€€';
-      case 'high': return '€€€';
-      default: return '€';
-    }
+  // Données de test
+  const mockFavorites = {
+    restaurants: [
+      {
+        _id: '1',
+        name: 'Pizza Palace',
+        cuisine: 'Italienne',
+        rating: 4.5,
+        deliveryTime: '25-35 min',
+        image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400'
+      },
+      {
+        _id: '2',
+        name: 'Sushi Master',
+        cuisine: 'Japonaise',
+        rating: 4.8,
+        deliveryTime: '30-45 min',
+        image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400'
+      }
+    ],
+    dishes: [
+      {
+        _id: '1',
+        name: 'Pizza Margherita',
+        restaurant: 'Pizza Palace',
+        price: 12.50,
+        image: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400'
+      },
+      {
+        _id: '2',
+        name: 'Sushi California',
+        restaurant: 'Sushi Master',
+        price: 15.80,
+        image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400'
+      }
+    ]
   };
 
-  const getRatingStars = (rating) => {
-    const stars = [];
-    const fullStars = Math.floor(rating || 0);
-    const hasHalfStar = (rating || 0) % 1 !== 0;
+  useEffect(() => {
+    // Simuler le chargement des favoris
+    setTimeout(() => {
+      setFavorites(mockFavorites);
+    }, 500);
+  }, []);
 
-    for (let i = 0; i < fullStars; i++) {
-      stars.push('⭐');
-    }
-    if (hasHalfStar) {
-      stars.push('⭐');
-    }
-    const emptyStars = 5 - stars.length;
-    for (let i = 0; i < emptyStars; i++) {
-      stars.push('☆');
-    }
-    return stars.join('');
+  const removeFavorite = (type, id) => {
+    setFavorites(prev => ({
+      ...prev,
+      [type]: prev[type].filter(item => item._id !== id)
+    }));
   };
 
-  if (loading) {
-    return (
-      <div className="dashboard">
-        <div className="sidebar">
-          <h3>Menu Client</h3>
-          <ul className="sidebar-menu">
-            <li><Link to="/user/dashboard">Accueil</Link></li>
-            <li><Link to="/user/restaurants">Restaurants</Link></li>
-            <li><Link to="/user/orders">Mes Commandes</Link></li>
-            <li><Link to="/user/favorites" className="active">Favoris</Link></li>
-            <li><Link to="/user/profile">Profil</Link></li>
-          </ul>
-        </div>
-        <div className="content-area">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Chargement de vos favoris...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const getTotalFavorites = () => {
+    return favorites.restaurants.length + favorites.dishes.length;
+  };
 
   return (
-    <div className="dashboard">
-      <div className="sidebar">
-        <h3>Menu Client</h3>
-        <ul className="sidebar-menu">
-          <li><Link to="/user/dashboard">Accueil</Link></li>
-          <li><Link to="/user/restaurants">Restaurants</Link></li>
-          <li><Link to="/user/orders">Mes Commandes</Link></li>
-          <li><Link to="/user/favorites" className="active">Favoris</Link></li>
-          <li><Link to="/user/profile">Profil</Link></li>
-        </ul>
-      </div>
-
-      <div className="content-area">
-        <div className="dashboard-header">
-          <h1>Mes Favoris</h1>
-          <p>Retrouvez vos restaurants et plats préférés</p>
-        </div>
-
-        {/* Barre de recherche */}
-        <div className="search-section">
-          <input
-            type="text"
-            placeholder="Rechercher dans vos favoris..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
+    <div className="favorites-page">
+      <div className="favorites-container">
+        <div className="favorites-header">
+          <h1>❤️ Mes Favoris</h1>
+          <p>Vos restaurants et plats préférés</p>
+          <div className="favorites-count">
+            Total : {getTotalFavorites()} favoris
+          </div>
         </div>
 
         {/* Onglets */}
-        <div className="tabs-section">
-          <div className="tabs">
-            <button
-              className={`tab ${activeTab === 'restaurants' ? 'active' : ''}`}
-              onClick={() => setActiveTab('restaurants')}
-            >
-              🏪 Restaurants ({restaurantFavorites.length})
-            </button>
-            <button
-              className={`tab ${activeTab === 'dishes' ? 'active' : ''}`}
-              onClick={() => setActiveTab('dishes')}
-            >
-              🍽️ Plats ({dishFavorites.length})
-            </button>
-          </div>
+        <div className="favorites-tabs">
+          <button
+            className={`tab-button ${activeTab === 'restaurants' ? 'active' : ''}`}
+            onClick={() => setActiveTab('restaurants')}
+          >
+            🏪 Restaurants ({favorites.restaurants.length})
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'dishes' ? 'active' : ''}`}
+            onClick={() => setActiveTab('dishes')}
+          >
+            🍽️ Plats ({favorites.dishes.length})
+          </button>
         </div>
 
-        {/* Contenu des favoris */}
+        {/* Contenu des onglets */}
         <div className="favorites-content">
-          {activeTab === 'restaurants' ? (
-            <div className="restaurants-favorites">
-              {restaurantFavorites.length === 0 ? (
-                <div className="no-favorites">
-                  <div className="no-favorites-icon">🏪</div>
+          {activeTab === 'restaurants' && (
+            <div className="favorites-section">
+              {favorites.restaurants.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-icon">🏪</div>
                   <h3>Aucun restaurant favori</h3>
-                  <p>
-                    {searchTerm 
-                      ? 'Aucun restaurant ne correspond à votre recherche'
-                      : 'Vous n\'avez pas encore ajouté de restaurants à vos favoris'
-                    }
-                  </p>
-                  {!searchTerm && (
-                    <Link to="/user/restaurants" className="btn btn-primary">
-                      Découvrir des restaurants
-                    </Link>
-                  )}
+                  <p>Vous n'avez pas encore ajouté de restaurants à vos favoris</p>
+                  <Link to="/user/restaurants" className="btn btn-primary">
+                    Découvrir des restaurants
+                  </Link>
                 </div>
               ) : (
                 <div className="favorites-grid">
-                  {restaurantFavorites.map(favorite => (
-                    <div key={favorite._id} className="favorite-card restaurant-card">
+                  {favorites.restaurants.map(restaurant => (
+                    <div key={restaurant._id} className="favorite-card restaurant">
                       <div className="favorite-image">
-                        <img 
-                          src={favorite.restaurant?.image || 'https://via.placeholder.com/300x200?text=Restaurant'} 
-                          alt={favorite.restaurant?.name}
-                        />
+                        <img src={restaurant.image} alt={restaurant.name} />
                         <button
-                          className="remove-favorite-btn"
-                          onClick={() => removeFavorite(favorite._id)}
-                          title="Retirer des favoris"
+                          className="remove-favorite"
+                          onClick={() => removeFavorite('restaurants', restaurant._id)}
                         >
                           ❌
                         </button>
-                        {favorite.restaurant?.isOpen ? (
-                          <span className="status-badge open">Ouvert</span>
-                        ) : (
-                          <span className="status-badge closed">Fermé</span>
-                        )}
                       </div>
-
+                      
                       <div className="favorite-info">
-                        <h3>{favorite.restaurant?.name}</h3>
-                        <p className="cuisine-type">{favorite.restaurant?.cuisine}</p>
+                        <h3>{restaurant.name}</h3>
+                        <p className="cuisine">{restaurant.cuisine}</p>
                         
-                        <div className="restaurant-meta">
-                          <span className="rating">
-                            {getRatingStars(favorite.restaurant?.rating)} ({favorite.restaurant?.rating || 'N/A'})
-                          </span>
-                          <span className="price-range">
-                            {getPriceRangeText(favorite.restaurant?.priceRange)}
-                          </span>
-                          <span className="delivery-time">
-                            🚚 {favorite.restaurant?.deliveryTime || 30} min
-                          </span>
+                        <div className="favorite-details">
+                          <span className="rating">⭐ {restaurant.rating}</span>
+                          <span className="delivery-time">🚚 {restaurant.deliveryTime}</span>
                         </div>
 
-                        <p className="description">
-                          {favorite.restaurant?.description || 'Découvrez nos délicieux plats préparés avec soin.'}
-                        </p>
-
-                        <div className="favorite-actions">
-                          <Link 
-                            to={`/user/restaurant/${favorite.restaurant?._id}`} 
-                            className="btn btn-primary"
-                          >
-                            Voir le menu
-                          </Link>
-                          <span className="min-order">
-                            Min. {favorite.restaurant?.minOrderAmount || 10}€
-                          </span>
-                        </div>
+                        <Link 
+                          to={`/user/restaurant/${restaurant._id}`}
+                          className="btn btn-primary"
+                        >
+                          Voir le menu
+                        </Link>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          ) : (
-            <div className="dishes-favorites">
-              {dishFavorites.length === 0 ? (
-                <div className="no-favorites">
-                  <div className="no-favorites-icon">🍽️</div>
+          )}
+
+          {activeTab === 'dishes' && (
+            <div className="favorites-section">
+              {favorites.dishes.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-icon">🍽️</div>
                   <h3>Aucun plat favori</h3>
-                  <p>
-                    {searchTerm 
-                      ? 'Aucun plat ne correspond à votre recherche'
-                      : 'Vous n\'avez pas encore ajouté de plats à vos favoris'
-                    }
-                  </p>
-                  {!searchTerm && (
-                    <Link to="/user/restaurants" className="btn btn-primary">
-                      Découvrir des plats
-                    </Link>
-                  )}
+                  <p>Vous n'avez pas encore ajouté de plats à vos favoris</p>
+                  <Link to="/user/restaurants" className="btn btn-primary">
+                    Découvrir des plats
+                  </Link>
                 </div>
               ) : (
                 <div className="favorites-grid">
-                  {dishFavorites.map(favorite => (
-                    <div key={favorite._id} className="favorite-card dish-card">
+                  {favorites.dishes.map(dish => (
+                    <div key={dish._id} className="favorite-card dish">
                       <div className="favorite-image">
-                        <img 
-                          src={favorite.dish?.images?.[0] || 'https://via.placeholder.com/300x200?text=Plat'} 
-                          alt={favorite.dish?.name}
-                        />
+                        <img src={dish.image} alt={dish.name} />
                         <button
-                          className="remove-favorite-btn"
-                          onClick={() => removeFavorite(favorite._id)}
-                          title="Retirer des favoris"
+                          className="remove-favorite"
+                          onClick={() => removeFavorite('dishes', dish._id)}
                         >
                           ❌
                         </button>
-                        {favorite.dish?.isDailySpecial && (
-                          <span className="badge special">Plat du jour</span>
-                        )}
-                        {favorite.dish?.isPromotion && (
-                          <span className="badge promotion">-{favorite.dish?.discountPercentage}%</span>
-                        )}
                       </div>
-
+                      
                       <div className="favorite-info">
-                        <h3>{favorite.dish?.name}</h3>
-                        <p className="restaurant-name">
-                          {favorite.dish?.restaurant?.name}
-                        </p>
+                        <h3>{dish.name}</h3>
+                        <p className="restaurant-name">{dish.restaurant}</p>
                         
-                        <div className="dish-meta">
-                          <span className="price">
-                            {favorite.dish?.isPromotion ? (
-                              <>
-                                <span className="original-price">{favorite.dish?.basePrice}€</span>
-                                <span className="discounted-price">
-                                  {(favorite.dish?.basePrice * (1 - favorite.dish?.discountPercentage / 100)).toFixed(2)}€
-                                </span>
-                              </>
-                            ) : (
-                              <span>{favorite.dish?.basePrice}€</span>
-                            )}
-                          </span>
-                          <span className="preparation-time">
-                            ⏱️ {favorite.dish?.preparationTime || 15} min
-                          </span>
+                        <div className="favorite-details">
+                          <span className="price">{dish.price}€</span>
                         </div>
 
-                        <p className="description">
-                          {favorite.dish?.description || 'Délicieux plat préparé avec soin.'}
-                        </p>
-
-                        <div className="favorite-actions">
-                          <Link 
-                            to={`/user/restaurant/${favorite.dish?.restaurant?._id}`} 
-                            className="btn btn-primary"
-                          >
-                            Commander
-                          </Link>
-                          <span className="category">
-                            {favorite.dish?.category}
-                          </span>
-                        </div>
+                        <button className="btn btn-primary">
+                          Commander
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -331,15 +187,15 @@ const Favorites = () => {
           )}
         </div>
 
-        {/* Résumé */}
-        {filteredFavorites.length > 0 && (
-          <div className="favorites-summary">
-            <p>
-              {filteredFavorites.length} favori(s) trouvé(s)
-              {searchTerm && ` pour "${searchTerm}"`}
-            </p>
-          </div>
-        )}
+        {/* Actions rapides */}
+        <div className="quick-actions">
+          <Link to="/user/restaurants" className="btn btn-secondary">
+            🍽️ Voir tous les restaurants
+          </Link>
+          <Link to="/user/dashboard" className="btn btn-secondary">
+            🏠 Retour au dashboard
+          </Link>
+        </div>
       </div>
     </div>
   );

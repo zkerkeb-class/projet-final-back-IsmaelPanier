@@ -11,10 +11,10 @@ const Footer = () => {
           <h3>🍕 FoodDelivery+</h3>
           <p>Votre plateforme de livraison de nourriture préférée</p>
           <div className="social-links">
-            <a href="#" className="social-link" title="Facebook">📘</a>
-            <a href="#" className="social-link" title="Twitter">🐦</a>
-            <a href="#" className="social-link" title="Instagram">📷</a>
-            <a href="#" className="social-link" title="LinkedIn">💼</a>
+            <button className="social-link" title="Facebook">📘</button>
+            <button className="social-link" title="Twitter">🐦</button>
+            <button className="social-link" title="Instagram">📷</button>
+            <button className="social-link" title="LinkedIn">💼</button>
           </div>
         </div>
 

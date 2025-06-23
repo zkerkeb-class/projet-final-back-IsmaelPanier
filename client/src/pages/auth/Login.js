@@ -108,6 +108,12 @@ const Login = () => {
             </Link>
           </p>
           <p>
+            Vous êtes un restaurant ?{' '}
+            <Link to="/auth/restaurant-register" className="link">
+              Inscription Restaurant
+            </Link>
+          </p>
+          <p>
             <Link to="/" className="link">
               Retour à l'accueil
             </Link>

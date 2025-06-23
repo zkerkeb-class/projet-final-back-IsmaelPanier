@@ -8,7 +8,7 @@ const API_BASE_URL = 'http://localhost:5000';
 const OrderTracking = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -41,37 +41,65 @@ const OrderTracking = () => {
   ];
 
   useEffect(() => {
-    fetchOrderDetails();
-    startOrderTracking();
-  }, [orderId]);
+    const updateOrderStatus = async (status) => {
+      try {
+        await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ status })
+        });
+      } catch (error) {
+        console.error('Erreur lors de la mise à jour du statut:', error);
+      }
+    };
 
-  const fetchOrderDetails = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+    const simulateDeliverySteps = (totalTime) => {
+      const steps = [
+        { status: 'preparing', time: 0, location: 'Restaurant', message: 'Votre commande est en préparation' },
+        { status: 'ready', time: totalTime * 0.3, location: 'Restaurant', message: 'Votre commande est prête' },
+        { status: 'picked_up', time: totalTime * 0.4, location: 'En route', message: 'Le livreur a récupéré votre commande' },
+        { status: 'delivered', time: totalTime, location: 'Chez vous', message: 'Votre commande a été livrée' }
+      ];
+
+      steps.forEach((step, index) => {
+        setTimeout(() => {
+          setDeliverySimulation(prev => ({
+            ...prev,
+            currentStatus: step.status,
+            location: step.location,
+            message: step.message
+          }));
+
+          // Mettre à jour le statut de la commande dans le backend
+          if (step.status === 'delivered') {
+            updateOrderStatus('delivered');
+          }
+        }, step.time * 1000); // Convertir en millisecondes
+      });
+    };
+
+    const startDeliverySimulation = () => {
+      const randomDriver = drivers[Math.floor(Math.random() * drivers.length)];
+      const estimatedTime = Math.floor(Math.random() * 20) + 15; // 15-35 minutes
+
+      setDeliverySimulation({
+        driverName: randomDriver.name,
+        vehicle: randomDriver.vehicle,
+        rating: randomDriver.rating,
+        estimatedTime,
+        currentStatus: 'preparing',
+        location: 'Restaurant',
+        isSimulated: true
       });
 
-      if (response.ok) {
-        const orderData = await response.json();
-        setOrder(orderData);
-        
-        // Démarrer la simulation si la commande est acceptée
-        if (orderData.status === 'accepted' && !deliverySimulation.isSimulated) {
-          startDeliverySimulation();
-        }
-      }
-    } catch (error) {
-      console.error('Erreur lors de la récupération de la commande:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      // Simulation des étapes de livraison
+      simulateDeliverySteps(estimatedTime);
+    };
 
-  const startOrderTracking = () => {
-    // Polling pour les mises à jour de la commande
-    const interval = setInterval(async () => {
+    const fetchOrderDetails = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
           headers: {
@@ -80,84 +108,34 @@ const OrderTracking = () => {
         });
 
         if (response.ok) {
-          const updatedOrder = await response.json();
-          setOrder(updatedOrder);
-
-          // Démarrer la simulation si la commande vient d'être acceptée
-          if (updatedOrder.status === 'accepted' && !deliverySimulation.isSimulated) {
+          const orderData = await response.json();
+          setOrder(orderData);
+          
+          // Démarrer la simulation si la commande est en cours
+          if (['pending', 'accepted', 'preparing', 'ready'].includes(orderData.status)) {
             startDeliverySimulation();
           }
-
-          // Arrêter le polling si la commande est terminée
-          if (['delivered', 'cancelled', 'refused'].includes(updatedOrder.status)) {
-            clearInterval(interval);
-          }
+        } else {
+          console.error('Erreur lors de la récupération de la commande');
         }
       } catch (error) {
-        console.error('Erreur lors du suivi de la commande:', error);
+        console.error('Erreur:', error);
+      } finally {
+        setLoading(false);
       }
-    }, 5000); // Vérifier toutes les 5 secondes
+    };
 
-    return () => clearInterval(interval);
-  };
+    const startOrderTracking = () => {
+      const interval = setInterval(() => {
+        fetchOrderDetails();
+      }, 5000); // Vérifier toutes les 5 secondes
 
-  const startDeliverySimulation = () => {
-    const randomDriver = drivers[Math.floor(Math.random() * drivers.length)];
-    const estimatedTime = Math.floor(Math.random() * 20) + 15; // 15-35 minutes
+      return () => clearInterval(interval);
+    };
 
-    setDeliverySimulation({
-      driverName: randomDriver.name,
-      vehicle: randomDriver.vehicle,
-      rating: randomDriver.rating,
-      estimatedTime,
-      currentStatus: 'preparing',
-      location: 'Restaurant',
-      isSimulated: true
-    });
-
-    // Simulation des étapes de livraison
-    simulateDeliverySteps(estimatedTime);
-  };
-
-  const simulateDeliverySteps = (totalTime) => {
-    const steps = [
-      { status: 'preparing', time: 0, location: 'Restaurant', message: 'Votre commande est en préparation' },
-      { status: 'ready', time: totalTime * 0.3, location: 'Restaurant', message: 'Votre commande est prête' },
-      { status: 'picked_up', time: totalTime * 0.4, location: 'En route', message: 'Le livreur a récupéré votre commande' },
-      { status: 'delivered', time: totalTime, location: 'Chez vous', message: 'Votre commande a été livrée' }
-    ];
-
-    steps.forEach((step, index) => {
-      setTimeout(() => {
-        setDeliverySimulation(prev => ({
-          ...prev,
-          currentStatus: step.status,
-          location: step.location,
-          message: step.message
-        }));
-
-        // Mettre à jour le statut de la commande dans le backend
-        if (step.status === 'delivered') {
-          updateOrderStatus('delivered');
-        }
-      }, step.time * 1000); // Convertir en millisecondes
-    });
-  };
-
-  const updateOrderStatus = async (status) => {
-    try {
-      await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ status })
-      });
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour du statut:', error);
-    }
-  };
+    fetchOrderDetails();
+    startOrderTracking();
+  }, [orderId, token, drivers]);
 
   const cancelOrder = async () => {
     if (window.confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
@@ -188,13 +166,6 @@ const OrderTracking = () => {
 
   const getStatusLabel = (status) => {
     return orderStatuses[status]?.label || 'Statut inconnu';
-  };
-
-  const formatTime = (dateString) => {
-    return new Date(dateString).toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   const formatDate = (dateString) => {

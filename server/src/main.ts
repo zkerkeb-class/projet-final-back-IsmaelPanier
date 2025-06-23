@@ -8,9 +8,16 @@ import { join } from 'path';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   
-  // Configuration CORS pour permettre les requêtes depuis le frontend sur le port 3000
+  // Configuration CORS pour permettre les requêtes depuis le frontend sur les ports 3000-3005
   app.enableCors({
-    origin: 'http://localhost:3000', // Autoriser uniquement le client
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001', 
+      'http://localhost:3002',
+      'http://localhost:3003',
+      'http://localhost:3004',
+      'http://localhost:3005'
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
@@ -33,7 +40,7 @@ async function bootstrap() {
   console.log('→ process.env.MONGO_URI =', process.env.MONGO_URI);
   console.log('__dirname:', __dirname);
   console.log(`🚀 Serveur démarré sur le port: ${port}`);
-  console.log(`🌐 CORS activé pour: http://localhost:3000`);
+  console.log(`🌐 CORS activé pour: http://localhost:3000-3005`);
   console.log(`📁 Fichiers statiques servis depuis: /uploads/`);
   await app.listen(port);
 }

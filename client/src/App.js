@@ -7,8 +7,10 @@ import './styles/theme.css';
 import Home from './pages/common/Home';
 import About from './pages/common/About';
 import Contact from './pages/common/Contact';
+import NavigationGuide from './pages/common/NavigationGuide';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import RestaurantRegister from './pages/auth/RestaurantRegister';
 
 // Pages Restaurant
 import RestaurantDashboard from './pages/restaurant/Dashboard';
@@ -56,8 +58,13 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/navigation-guide" element={<NavigationGuide />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/restaurant-register" element={<RestaurantRegister />} />
+                <Route path="/auth/login" element={<Login />} />
+                <Route path="/auth/register" element={<Register />} />
+                <Route path="/auth/restaurant-register" element={<RestaurantRegister />} />
                 
                 {/* Routes Restaurant - Protégées */}
                 <Route path="/restaurant/dashboard" element={
