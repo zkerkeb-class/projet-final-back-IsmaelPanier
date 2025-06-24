@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import './Profile.css';
 
 const UserProfile = () => {
-  const { user, updateProfile } = useAuth();
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',

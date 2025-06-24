@@ -18,28 +18,14 @@ const RestaurantRegister = () => {
 
   // Données du formulaire
   const [formData, setFormData] = useState({
-    // Étape 1: Informations de base
-    name: '',
-    description: '',
+    restaurantName: '',
+    restaurantDescription: '',
+    restaurantAdress: '',
     cuisine: '',
-    address: '',
     phone: '',
     email: '',
-    priceRange: 'medium',
-    
-    // Étape 2: Horaires d'ouverture
-    openingHours: {
-      monday: { open: '11:00', close: '22:00' },
-      tuesday: { open: '11:00', close: '22:00' },
-      wednesday: { open: '11:00', close: '22:00' },
-      thursday: { open: '11:00', close: '22:00' },
-      friday: { open: '11:00', close: '23:00' },
-      saturday: { open: '11:00', close: '23:00' },
-      sunday: { open: '12:00', close: '21:00' }
-    },
-    
-    // Étape 3: Plats
-    dishes: []
+    password: '',
+    confirmPassword: ''
   });
 
   // Données d'authentification
@@ -51,37 +37,21 @@ const RestaurantRegister = () => {
     confirmPassword: ''
   });
 
-  // Cuisines disponibles
-  const cuisines = [
+  // Catégories de cuisine
+  const cuisineTypes = [
     'Italienne',
-    'Chinoise',
+    'Française',
     'Japonaise',
+    'Chinoise',
     'Indienne',
     'Mexicaine',
-    'Française',
     'Américaine',
     'Thaïlandaise',
+    'Vietnamienne',
     'Libanaise',
-    'Végétarienne',
-    'Fast-food',
-    'Pizzeria',
-    'Sushi',
-    'Burgers',
-    'Salades',
-    'Desserts'
-  ];
-
-  // Catégories de plats
-  const dishCategories = [
-    'Entrées',
-    'Plats principaux',
-    'Pizzas',
-    'Burgers',
-    'Sushis',
-    'Salades',
-    'Desserts',
-    'Boissons',
-    'Accompagnements'
+    'Grecque',
+    'Espagnole',
+    'Autre'
   ];
 
   const steps = [
@@ -312,7 +282,7 @@ const RestaurantRegister = () => {
             required
           >
             <option value="">Sélectionnez une cuisine</option>
-            {cuisines.map(cuisine => (
+            {cuisineTypes.map(cuisine => (
               <option key={cuisine} value={cuisine}>{cuisine}</option>
             ))}
           </select>

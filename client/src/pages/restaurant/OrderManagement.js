@@ -7,7 +7,7 @@ import './OrderManagement.css';
 const API_BASE_URL = 'http://localhost:5000';
 
 const OrderManagement = () => {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +23,6 @@ const OrderManagement = () => {
 
   // États pour les statistiques
   const [timeRange, setTimeRange] = useState('week');
-  const [salesData, setSalesData] = useState([]);
 
   // Fonction pour récupérer les commandes du restaurant
   const fetchOrders = useCallback(async () => {

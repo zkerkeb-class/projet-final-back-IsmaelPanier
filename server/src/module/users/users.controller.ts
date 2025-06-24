@@ -137,4 +137,14 @@ export class UsersController {
             message: 'Plat retiré des favoris',
         };
     }
+
+    // Endpoint pour vérifier si un email existe déjà
+    @Post('check-email')
+    async checkEmail(@Body() body: { email: string }) {
+        const existingUser = await this.UsersService.findByEmail(body.email);
+        return {
+            exists: !!existingUser,
+            message: existingUser ? 'Cet email est déjà utilisé' : 'Email disponible'
+        };
+    }
 }

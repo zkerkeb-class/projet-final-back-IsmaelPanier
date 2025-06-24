@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './RestaurantList.css';
@@ -9,313 +9,314 @@ const RestaurantList = () => {
   const { token } = useAuth();
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCuisine, setSelectedCuisine] = useState('');
-  const [priceFilter, setPriceFilter] = useState('');
-  const [favorites, setFavorites] = useState([]);
-  const [sortBy, setSortBy] = useState('name');
+  const [error, setError] = useState('');
+  const [filters, setFilters] = useState({
+    category: '',
+    rating: '',
+    deliveryTime: '',
+    priceRange: '',
+    search: ''
+  });
+  const [sortBy, setSortBy] = useState('recommended');
 
-  // Cuisines disponibles
-  const cuisines = [
-    'Toutes les cuisines',
-    'Italienne',
-    'Chinoise',
-    'Japonaise',
-    'Indienne',
-    'Mexicaine',
-    'Française',
-    'Américaine',
-    'Thaïlandaise',
-    'Libanaise',
-    'Végétarienne',
-    'Fast-food'
+  const categories = [
+    { id: 'all', name: 'Tous', icon: 'restaurant' },
+    { id: 'Français', name: 'Français', icon: 'restaurant_menu' },
+    { id: 'Italien', name: 'Italien', icon: 'local_pizza' },
+    { id: 'Japonais', name: 'Japonais', icon: 'ramen_dining' },
+    { id: 'Fast Food', name: 'Fast Food', icon: 'fastfood' },
+    { id: 'Indien', name: 'Indien', icon: 'curry' },
+    { id: 'Café', name: 'Café', icon: 'local_cafe' }
   ];
 
-  // Récupérer les restaurants
-  useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/restaurant`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setRestaurants(data);
-        }
-      } catch (error) {
-        console.error('Erreur lors de la récupération des restaurants:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchFavorites = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/users/favorites`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setFavorites(data.map(fav => fav.restaurantId));
-        }
-      } catch (error) {
-        console.error('Erreur lors de la récupération des favoris:', error);
-      }
-    };
-
-    fetchRestaurants();
-    fetchFavorites();
-  }, [token]);
-
-  const toggleFavorite = async (restaurantId) => {
+  const fetchRestaurants = useCallback(async () => {
     try {
-      const isFavorite = favorites.includes(restaurantId);
-      const method = isFavorite ? 'DELETE' : 'POST';
+      setLoading(true);
+      setError('');
       
-      const response = await fetch(`${API_BASE_URL}/users/favorites/${restaurantId}`, {
-        method,
+      const response = await fetch(`${API_BASE_URL}/restaurant`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
         }
       });
 
-      if (response.ok) {
-        if (isFavorite) {
-          setFavorites(favorites.filter(id => id !== restaurantId));
-        } else {
-          setFavorites([...favorites, restaurantId]);
-        }
+      if (!response.ok) {
+        throw new Error('Erreur lors du chargement des restaurants');
       }
-    } catch (error) {
-      console.error('Erreur lors de la modification des favoris:', error);
-    }
-  };
 
-  // Filtrer et trier les restaurants
-  const filteredRestaurants = restaurants
-    .filter(restaurant => {
-      const matchesSearch = restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           restaurant.cuisine.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCuisine = selectedCuisine === '' || selectedCuisine === 'Toutes les cuisines' || 
-                            restaurant.cuisine === selectedCuisine;
-      const matchesPrice = priceFilter === '' || restaurant.priceRange === priceFilter;
+      const data = await response.json();
+      console.log('✅ Restaurants chargés depuis l\'API:', data);
       
-      return matchesSearch && matchesCuisine && matchesPrice;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'rating':
-          return (b.rating || 0) - (a.rating || 0);
-        case 'distance':
-          return (a.distance || 0) - (b.distance || 0);
-        case 'deliveryTime':
-          return (a.deliveryTime || 0) - (b.deliveryTime || 0);
-        default:
-          return 0;
-      }
+      // Transformer les données si nécessaire
+      const transformedRestaurants = Array.isArray(data) ? data : [];
+      setRestaurants(transformedRestaurants);
+    } catch (err) {
+      console.error('❌ Erreur chargement restaurants:', err);
+      setError('Erreur lors du chargement des restaurants');
+      setRestaurants([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchRestaurants();
+  }, [fetchRestaurants]);
+
+  const handleFilterChange = (filterType, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterType]: value
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      category: '',
+      rating: '',
+      deliveryTime: '',
+      priceRange: '',
+      search: ''
     });
-
-  const getPriceRangeText = (priceRange) => {
-    switch (priceRange) {
-      case 'low': return '€';
-      case 'medium': return '€€';
-      case 'high': return '€€€';
-      default: return '€';
-    }
   };
 
-  const getDeliveryTimeText = (deliveryTime) => {
-    if (!deliveryTime) return '30-45 min';
-    return `${deliveryTime} min`;
-  };
+  const filteredRestaurants = restaurants.filter(restaurant => {
+    if (filters.category && filters.category !== 'all' && restaurant.category !== filters.category) return false;
+    if (filters.rating && (restaurant.rating || 0) < parseFloat(filters.rating)) return false;
+    if (filters.search && !restaurant.name?.toLowerCase().includes(filters.search.toLowerCase())) return false;
+    return true;
+  });
 
-  const getRatingStars = (rating) => {
-    const stars = [];
-    const fullStars = Math.floor(rating || 0);
-    const hasHalfStar = (rating || 0) % 1 !== 0;
-
-    for (let i = 0; i < fullStars; i++) {
-      stars.push('⭐');
+  const sortedRestaurants = [...filteredRestaurants].sort((a, b) => {
+    switch (sortBy) {
+      case 'rating':
+        return (b.rating || 0) - (a.rating || 0);
+      case 'deliveryTime':
+        const timeA = parseInt(a.deliveryTime?.split('-')[0]) || 0;
+        const timeB = parseInt(b.deliveryTime?.split('-')[0]) || 0;
+        return timeA - timeB;
+      case 'deliveryFee':
+        return (a.deliveryFee || 0) - (b.deliveryFee || 0);
+      default:
+        return 0;
     }
-    if (hasHalfStar) {
-      stars.push('⭐');
-    }
-    const emptyStars = 5 - stars.length;
-    for (let i = 0; i < emptyStars; i++) {
-      stars.push('☆');
-    }
-    return stars.join('');
-  };
+  });
 
   if (loading) {
     return (
-      <div className="dashboard">
-        <div className="sidebar">
-          <h3>Menu Client</h3>
-          <ul className="sidebar-menu">
-            <li><Link to="/user/dashboard">Accueil</Link></li>
-            <li><Link to="/user/restaurants" className="active">Restaurants</Link></li>
-            <li><Link to="/user/profile">Profil</Link></li>
-          </ul>
+      <div className="restaurant-list-page">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Chargement des restaurants...</p>
         </div>
-        <div className="content-area">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Chargement des restaurants...</p>
-          </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="restaurant-list-page">
+        <div className="error-container">
+          <h2>Erreur de chargement</h2>
+          <p>{error}</p>
+          <button onClick={fetchRestaurants} className="btn btn-primary">
+            Réessayer
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="dashboard">
-      <div className="sidebar">
-        <h3>Menu Client</h3>
-        <ul className="sidebar-menu">
-          <li><Link to="/user/dashboard">Accueil</Link></li>
-          <li><Link to="/user/restaurants" className="active">Restaurants</Link></li>
-          <li><Link to="/user/orders">Mes Commandes</Link></li>
-          <li><Link to="/user/favorites">Favoris</Link></li>
-          <li><Link to="/user/profile">Profil</Link></li>
-        </ul>
+    <div className="restaurant-list-page">
+      {/* Header avec recherche */}
+      <div className="page-header">
+        <div className="container">
+          <h1>Restaurants près de vous</h1>
+          <div className="search-section">
+            <div className="search-bar">
+              <span className="material-icons">search</span>
+              <input
+                type="text"
+                placeholder="Rechercher un restaurant..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+              />
+            </div>
+            <div className="sort-dropdown">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="recommended">Recommandé</option>
+                <option value="rating">Note</option>
+                <option value="deliveryTime">Temps de livraison</option>
+                <option value="deliveryFee">Frais de livraison</option>
+              </select>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="content-area">
-        <div className="dashboard-header">
-          <h1>Restaurants</h1>
-          <p>Découvrez nos restaurants partenaires</p>
-        </div>
-
-        {/* Filtres et recherche */}
-        <div className="filters-section">
-          <div className="search-bar">
-            <input
-              type="text"
-              placeholder="Rechercher un restaurant ou une cuisine..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-          </div>
-
-          <div className="filters-row">
-            <select
-              value={selectedCuisine}
-              onChange={(e) => setSelectedCuisine(e.target.value)}
-              className="filter-select"
-            >
-              {cuisines.map(cuisine => (
-                <option key={cuisine} value={cuisine}>{cuisine}</option>
-              ))}
-            </select>
-
-            <select
-              value={priceFilter}
-              onChange={(e) => setPriceFilter(e.target.value)}
-              className="filter-select"
-            >
-              <option value="">Tous les prix</option>
-              <option value="low">€ (Économique)</option>
-              <option value="medium">€€ (Moyen)</option>
-              <option value="high">€€€ (Élevé)</option>
-            </select>
-
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="filter-select"
-            >
-              <option value="name">Trier par nom</option>
-              <option value="rating">Trier par note</option>
-              <option value="distance">Trier par distance</option>
-              <option value="deliveryTime">Trier par temps de livraison</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Liste des restaurants */}
-        <div className="restaurants-grid">
-          {filteredRestaurants.length === 0 ? (
-            <div className="no-results">
-              <h3>Aucun restaurant trouvé</h3>
-              <p>Essayez de modifier vos critères de recherche</p>
-            </div>
-          ) : (
-            filteredRestaurants.map(restaurant => (
-              <div key={restaurant._id} className="restaurant-card">
-                <div className="restaurant-image">
-                  <img 
-                    src={restaurant.image || '/default-restaurant.jpg'} 
-                    alt={restaurant.name}
-                    onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/300x200?text=Restaurant';
-                    }}
-                  />
-                  <button
-                    className={`favorite-btn ${favorites.includes(restaurant._id) ? 'active' : ''}`}
-                    onClick={() => toggleFavorite(restaurant._id)}
-                    title={favorites.includes(restaurant._id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-                  >
-                    {favorites.includes(restaurant._id) ? '❤️' : '🤍'}
+      <div className="main-content">
+        <div className="container">
+          <div className="content-layout">
+            {/* Sidebar avec filtres */}
+            <aside className="filters-sidebar">
+              <div className="filters-container">
+                <div className="filters-header">
+                  <h3>Filtres</h3>
+                  <button onClick={clearFilters} className="clear-filters">
+                    <span className="material-icons">clear</span>
+                    Effacer
                   </button>
-                  {restaurant.isOpen ? (
-                    <span className="status-badge open">Ouvert</span>
-                  ) : (
-                    <span className="status-badge closed">Fermé</span>
-                  )}
                 </div>
 
-                <div className="restaurant-info">
-                  <h3>{restaurant.name}</h3>
-                  <p className="cuisine-type">{restaurant.cuisine}</p>
-                  
-                  <div className="restaurant-meta">
-                    <span className="rating">
-                      {getRatingStars(restaurant.rating)} ({restaurant.rating || 'N/A'})
-                    </span>
-                    <span className="price-range">
-                      {getPriceRangeText(restaurant.priceRange)}
-                    </span>
-                    <span className="delivery-time">
-                      🚚 {getDeliveryTimeText(restaurant.deliveryTime)}
-                    </span>
+                {/* Catégories */}
+                <div className="filter-section">
+                  <h4>Catégories</h4>
+                  <div className="category-filters">
+                    {categories.map(category => (
+                      <button
+                        key={category.id}
+                        className={`category-filter ${filters.category === category.id ? 'active' : ''}`}
+                        onClick={() => handleFilterChange('category', category.id)}
+                      >
+                        <span className="material-icons">{category.icon}</span>
+                        {category.name}
+                      </button>
+                    ))}
                   </div>
+                </div>
 
-                  <p className="description">
-                    {restaurant.description || 'Découvrez nos délicieux plats préparés avec soin.'}
-                  </p>
+                {/* Note minimale */}
+                <div className="filter-section">
+                  <h4>Note minimale</h4>
+                  <div className="rating-filters">
+                    {[4.5, 4.0, 3.5, 3.0].map(rating => (
+                      <button
+                        key={rating}
+                        className={`rating-filter ${filters.rating === rating.toString() ? 'active' : ''}`}
+                        onClick={() => handleFilterChange('rating', rating.toString())}
+                      >
+                        <span className="material-icons">star</span>
+                        {rating}+
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-                  <div className="restaurant-actions">
-                    <Link 
-                      to={`/user/restaurant/${restaurant._id}`} 
-                      className="btn btn-primary"
+                {/* Gamme de prix */}
+                <div className="filter-section">
+                  <h4>Gamme de prix</h4>
+                  <div className="price-filters">
+                    {['€', '€€', '€€€'].map(price => (
+                      <button
+                        key={price}
+                        className={`price-filter ${filters.priceRange === price ? 'active' : ''}`}
+                        onClick={() => handleFilterChange('priceRange', price)}
+                      >
+                        {price}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Temps de livraison */}
+                <div className="filter-section">
+                  <h4>Temps de livraison</h4>
+                  <div className="time-filters">
+                    <button
+                      className={`time-filter ${filters.deliveryTime === 'fast' ? 'active' : ''}`}
+                      onClick={() => handleFilterChange('deliveryTime', 'fast')}
                     >
-                      Voir le menu
-                    </Link>
-                    <span className="min-order">
-                      Min. {restaurant.minOrderAmount || 10}€
-                    </span>
+                      <span className="material-icons">flash_on</span>
+                      Moins de 30 min
+                    </button>
                   </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            </aside>
 
-        {filteredRestaurants.length > 0 && (
-          <div className="results-info">
-            <p>{filteredRestaurants.length} restaurant(s) trouvé(s)</p>
+            {/* Liste des restaurants */}
+            <main className="restaurants-main">
+              <div className="results-header">
+                <p>{sortedRestaurants.length} restaurant{sortedRestaurants.length > 1 ? 's' : ''} trouvé{sortedRestaurants.length > 1 ? 's' : ''}</p>
+              </div>
+
+              {sortedRestaurants.length === 0 && !loading ? (
+                <div className="empty-state">
+                  <div className="empty-icon">🏪</div>
+                  <h3>Aucun restaurant trouvé</h3>
+                  <p>Aucun restaurant ne correspond à vos critères de recherche</p>
+                  <button onClick={clearFilters} className="btn btn-primary">
+                    Effacer les filtres
+                  </button>
+                </div>
+              ) : (
+                <div className="restaurants-grid">
+                  {sortedRestaurants.map(restaurant => (
+                    <Link
+                      key={restaurant._id}
+                      to={`/user/restaurant/${restaurant._id}`}
+                      className="restaurant-card"
+                    >
+                      <div className="restaurant-image">
+                        {restaurant.image ? (
+                          <img src={restaurant.image} alt={restaurant.name} />
+                        ) : (
+                          <div className="image-placeholder">
+                            <span className="material-icons">restaurant</span>
+                          </div>
+                        )}
+                        {restaurant.tags && restaurant.tags.length > 0 && (
+                          <div className="restaurant-tags">
+                            {restaurant.tags.slice(0, 2).map((tag, index) => (
+                              <span key={index} className="tag">{tag}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="restaurant-info">
+                        <div className="restaurant-header">
+                          <h3>{restaurant.name}</h3>
+                          <div className="restaurant-rating">
+                            <span className="material-icons">star</span>
+                            {restaurant.rating || 'N/A'}
+                          </div>
+                        </div>
+
+                        <p className="restaurant-description">
+                          {restaurant.description || 'Aucune description disponible'}
+                        </p>
+
+                        <div className="restaurant-details">
+                          <span className="cuisine">{restaurant.cuisine || 'Cuisine non spécifiée'}</span>
+                          <span className="delivery-time">
+                            <span className="material-icons">delivery_dining</span>
+                            {restaurant.deliveryTime || 'N/A'}
+                          </span>
+                          <span className="price-range">{restaurant.priceRange || 'N/A'}</span>
+                        </div>
+
+                        <div className="restaurant-actions">
+                          <button className="btn btn-primary">
+                            Voir le menu
+                          </button>
+                          <button className="btn btn-outline">
+                            <span className="material-icons">favorite_border</span>
+                          </button>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </main>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

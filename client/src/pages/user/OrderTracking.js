@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './OrderTracking.css';
@@ -14,9 +14,12 @@ const OrderTracking = () => {
   const [loading, setLoading] = useState(true);
   const [deliverySimulation, setDeliverySimulation] = useState({
     driverName: '',
+    vehicle: '',
+    rating: 0,
     estimatedTime: 0,
     currentStatus: 'preparing',
     location: '',
+    message: '',
     isSimulated: false
   });
 
@@ -32,13 +35,13 @@ const OrderTracking = () => {
     refused: { label: 'Refusée', icon: '🚫', color: 'danger' }
   };
 
-  // Simulation des livreurs
-  const drivers = [
+  // Simulation des livreurs - mémorisé pour éviter les re-renders
+  const drivers = useMemo(() => [
     { name: 'Mohammed', vehicle: 'Scooter', rating: 4.8 },
     { name: 'Sarah', vehicle: 'Vélo électrique', rating: 4.9 },
     { name: 'Ahmed', vehicle: 'Scooter', rating: 4.7 },
     { name: 'Emma', vehicle: 'Vélo électrique', rating: 4.6 }
-  ];
+  ], []);
 
   useEffect(() => {
     const updateOrderStatus = async (status) => {

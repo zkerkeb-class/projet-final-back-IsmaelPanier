@@ -1,4 +1,4 @@
-// src/module/users/users.service.ts
+// src/module/users/users.service.ts - VERSION CORRIGÉE
 
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -11,7 +11,6 @@ import { RegisterDto } from '../auth/dto/register.dto';
 import * as bcrypt from 'bcryptjs';
 import { UserRole } from '../../common/enums/user-role.enum';
 
-
 @Injectable()
 export class UsersService {
   constructor(
@@ -19,27 +18,17 @@ export class UsersService {
     @InjectModel(Favorite.name) private favoriteModel: Model<FavoriteDocument>,
   ) {}
 
-  // findByEmail doit renvoyer UserDocument | null
-//   async findByEmail(email: string): Promise<UserDocument | null> {
-//     return this.userModel.findOne({ email }).exec();
-//   }
+  async findByEmail(email: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({ email }).select('+password').exec();
+  }
 
-async findByEmail(email: string): Promise<UserDocument | null> {
-  return this.userModel.findOne({ email }).select('+password').exec();
-}
-
-
-  // Création d'un utilisateur : retourne UserDocument
-async create(registerDto: RegisterDto): Promise<UserDocument> {
-  const user = new this.userModel({
-    ...registerDto,
-    role: registerDto.role || UserRole.User, 
-  });
-  return user.save();
-}
-
-
-
+  async create(registerDto: RegisterDto): Promise<UserDocument> {
+    const user = new this.userModel({
+      ...registerDto,
+      role: registerDto.role || UserRole.User, 
+    });
+    return user.save();
+  }
 
   async findAll(): Promise<UserDocument[]> {
     return this.userModel.find().exec();
@@ -146,4 +135,4 @@ async create(registerDto: RegisterDto): Promise<UserDocument> {
     const favorite = await this.favoriteModel.findOne(filter).exec();
     return !!favorite;
   }
-}
+} 

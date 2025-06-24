@@ -354,4 +354,306 @@
   .restaurant-actions {
     flex-direction: column;
   }
+}
+
+/* Dashboard Uber Eats Style */
+
+.dashboard-uber {
+  min-height: 100vh;
+  background-color: var(--gray-50);
+}
+
+/* Logo personnalisé */
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--uber-black);
+  text-decoration: none;
+}
+
+.app-logo-icon {
+  width: 2rem;
+  height: 2rem;
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  color: white;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.header-user-info {
+  display: flex;
+  align-items: center;
+}
+
+.welcome-text {
+  font-size: var(--font-size-lg);
+  color: var(--gray-900);
+  font-weight: 600;
+}
+
+.dashboard-main {
+  padding-top: var(--spacing-6);
+}
+
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-6);
+}
+
+/* Hero Section */
+.hero-section {
+  text-align: center;
+  padding: var(--spacing-12) 0;
+  background: linear-gradient(135deg, #000000 0%, #1f2937 100%);
+  color: white;
+  margin: 0 calc(-1 * var(--spacing-6));
+  margin-bottom: var(--spacing-8);
+}
+
+.hero-title {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  margin-bottom: var(--spacing-3);
+}
+
+.hero-subtitle {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-8);
+  opacity: 0.9;
+}
+
+.hero-search {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.hero-search .uber-input {
+  background: white;
+  color: var(--gray-900);
+}
+
+/* Filters Section */
+.filters-section {
+  margin-bottom: var(--spacing-8);
+}
+
+.filters-container {
+  display: flex;
+  gap: var(--spacing-6);
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+.filter-label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: var(--spacing-2);
+}
+
+.filter-select {
+  background: white;
+}
+
+/* Results Section */
+.results-section {
+  margin-bottom: var(--spacing-12);
+}
+
+.results-header {
+  margin-bottom: var(--spacing-6);
+}
+
+.results-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-16);
+  color: var(--gray-600);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: var(--spacing-4);
+}
+
+.empty-state h3 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  margin-bottom: var(--spacing-2);
+  color: var(--gray-900);
+}
+
+/* Quick Actions Section */
+.quick-actions-section {
+  margin-bottom: var(--spacing-12);
+}
+
+.quick-actions-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-6);
+}
+
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-6);
+}
+
+.quick-action-card {
+  background: white;
+  padding: var(--spacing-6);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.quick-action-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.quick-action-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-4);
+}
+
+.quick-action-card h4 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-2);
+}
+
+.quick-action-card p {
+  color: var(--gray-600);
+  font-size: var(--font-size-sm);
+}
+
+/* Restaurant Card Enhancements */
+.restaurant-card .delivery-time {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  color: var(--gray-600);
+}
+
+.restaurant-card .price-range {
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+/* Étoiles améliorées - Plus visibles */
+.restaurant-rating-enhanced {
+  display: flex;
+  align-items: center;
+}
+
+.rating-stars {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: white;
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-lg);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+}
+
+.star-icon {
+  font-size: 1rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.rating-value {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-400);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 0 var(--spacing-4);
+  }
+  
+  .hero-section {
+    margin: 0 calc(-1 * var(--spacing-4));
+    padding: var(--spacing-8) var(--spacing-4);
+  }
+  
+  .hero-title {
+    font-size: var(--font-size-2xl);
+  }
+  
+  .hero-subtitle {
+    font-size: var(--font-size-base);
+  }
+  
+  .filters-container {
+    flex-direction: column;
+    gap: var(--spacing-4);
+  }
+  
+  .filter-group {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .welcome-text {
+    font-size: var(--font-size-base);
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-search {
+    margin: 0 var(--spacing-4);
+  }
+  
+  .results-title {
+    font-size: var(--font-size-lg);
+  }
+  
+  .app-logo span {
+    display: none;
+  }
+  
+  .app-logo-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 1rem;
+  }
 } 

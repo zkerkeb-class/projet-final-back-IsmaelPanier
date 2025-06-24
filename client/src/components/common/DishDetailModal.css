@@ -1,0 +1,415 @@
+/* Dish Detail Modal CSS */
+
+.dish-detail-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-4);
+  backdrop-filter: blur(4px);
+}
+
+.dish-detail-modal {
+  background: white;
+  border-radius: var(--radius-2xl);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow-2xl);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.dish-detail-modal-close {
+  position: absolute;
+  top: var(--spacing-4);
+  right: var(--spacing-4);
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  z-index: 10;
+  transition: all var(--transition-base);
+  backdrop-filter: blur(10px);
+}
+
+.dish-detail-modal-close:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.1);
+}
+
+/* Image Section */
+.dish-detail-modal-image {
+  position: relative;
+  height: 250px;
+  overflow: hidden;
+}
+
+.dish-detail-modal-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dish-detail-modal-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--gray-200) 0%, var(--gray-300) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dish-detail-placeholder-icon {
+  font-size: 3rem;
+  color: var(--gray-500);
+}
+
+.dish-detail-badges {
+  position: absolute;
+  bottom: var(--spacing-4);
+  left: var(--spacing-4);
+  display: flex;
+  gap: var(--spacing-2);
+}
+
+.badge {
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+}
+
+.badge.vegetarian {
+  background: rgba(34, 197, 94, 0.9);
+  color: white;
+}
+
+.badge.spicy {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+}
+
+/* Content Section */
+.dish-detail-modal-content {
+  padding: var(--spacing-6);
+  max-height: calc(90vh - 250px);
+  overflow-y: auto;
+}
+
+.dish-detail-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-4);
+}
+
+.dish-detail-modal-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0;
+  flex: 1;
+}
+
+.dish-detail-modal-price {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--primary-600);
+  margin-left: var(--spacing-4);
+}
+
+.dish-detail-modal-description {
+  color: var(--gray-600);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-6);
+  font-size: var(--font-size-base);
+}
+
+.preparation-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  background: var(--gray-50);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-6);
+  font-size: var(--font-size-sm);
+  color: var(--gray-700);
+}
+
+.prep-icon {
+  font-size: 1.1rem;
+}
+
+/* Sections */
+.dish-detail-section {
+  margin-bottom: var(--spacing-6);
+}
+
+.section-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-3);
+}
+
+/* Ingredients */
+.ingredients-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+.ingredient-tag {
+  background: var(--primary-50);
+  color: var(--primary-700);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  border: 1px solid var(--primary-200);
+}
+
+/* Allergens */
+.allergens-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+.allergen-tag {
+  background: var(--error-50);
+  color: var(--error-700);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  border: 1px solid var(--error-200);
+}
+
+/* Extras */
+.extras-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.extra-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.extra-item:hover {
+  border-color: var(--primary-300);
+  background: var(--primary-25);
+}
+
+.extra-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-600);
+}
+
+.extra-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--gray-900);
+}
+
+.extra-price {
+  font-weight: 600;
+  color: var(--primary-600);
+}
+
+/* Special Instructions */
+.special-instructions {
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+  transition: border-color var(--transition-base);
+}
+
+.special-instructions:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.special-instructions::placeholder {
+  color: var(--gray-500);
+}
+
+/* Footer */
+.dish-detail-modal-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  padding-top: var(--spacing-6);
+  border-top: 1px solid var(--gray-200);
+  margin-top: var(--spacing-6);
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  background: var(--gray-50);
+  padding: var(--spacing-2);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--gray-200);
+}
+
+.quantity-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: var(--primary-600);
+  color: white;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all var(--transition-base);
+}
+
+.quantity-btn:hover:not(:disabled) {
+  background: var(--primary-700);
+  transform: scale(1.05);
+}
+
+.quantity-btn:disabled {
+  background: var(--gray-300);
+  color: var(--gray-500);
+  cursor: not-allowed;
+}
+
+.quantity-display {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--gray-900);
+  min-width: 24px;
+  text-align: center;
+}
+
+.add-to-cart-detail-modal-btn {
+  flex: 1;
+  background: var(--primary-600);
+  color: white;
+  border: none;
+  padding: var(--spacing-4) var(--spacing-6);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.add-to-cart-detail-modal-btn:hover {
+  background: var(--primary-700);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dish-detail-modal {
+    margin: var(--spacing-2);
+    max-height: 95vh;
+  }
+  
+  .dish-detail-modal-image {
+    height: 200px;
+  }
+  
+  .dish-detail-modal-content {
+    padding: var(--spacing-4);
+    max-height: calc(95vh - 200px);
+  }
+  
+  .dish-detail-modal-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-2);
+  }
+  
+  .dish-detail-modal-price {
+    margin-left: 0;
+  }
+  
+  .dish-detail-modal-footer {
+    flex-direction: column;
+    gap: var(--spacing-4);
+  }
+  
+  .quantity-controls {
+    align-self: center;
+  }
+  
+  .add-to-cart-detail-modal-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .dish-detail-modal-overlay {
+    padding: var(--spacing-2);
+  }
+  
+  .dish-detail-modal-title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .dish-detail-modal-price {
+    font-size: var(--font-size-xl);
+  }
+  
+  .ingredients-list,
+  .allergens-list {
+    flex-direction: column;
+  }
+  
+  .ingredient-tag,
+  .allergen-tag {
+    text-align: center;
+  }
+} 

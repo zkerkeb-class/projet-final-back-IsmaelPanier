@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import './Favorites.css';
 
@@ -9,11 +9,11 @@ const Favorites = () => {
     dishes: []
   });
 
-  // Données de test
-  const mockFavorites = {
+  // Données de test - mémorisées pour éviter les re-renders
+  const mockFavorites = useMemo(() => ({
     restaurants: [
       {
-        _id: '1',
+        _id: '665c1e2f8b1e8a001e3e4a1b',
         name: 'Pizza Palace',
         cuisine: 'Italienne',
         rating: 4.5,
@@ -21,7 +21,7 @@ const Favorites = () => {
         image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400'
       },
       {
-        _id: '2',
+        _id: '665c1e2f8b1e8a001e3e4a1c',
         name: 'Sushi Master',
         cuisine: 'Japonaise',
         rating: 4.8,
@@ -31,28 +31,28 @@ const Favorites = () => {
     ],
     dishes: [
       {
-        _id: '1',
+        _id: '665c1e2f8b1e8a001e3e4a21',
         name: 'Pizza Margherita',
         restaurant: 'Pizza Palace',
         price: 12.50,
         image: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400'
       },
       {
-        _id: '2',
+        _id: '665c1e2f8b1e8a001e3e4a22',
         name: 'Sushi California',
         restaurant: 'Sushi Master',
         price: 15.80,
         image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400'
       }
     ]
-  };
+  }), []);
 
   useEffect(() => {
     // Simuler le chargement des favoris
     setTimeout(() => {
       setFavorites(mockFavorites);
     }, 500);
-  }, []);
+  }, [mockFavorites]);
 
   const removeFavorite = (type, id) => {
     setFavorites(prev => ({

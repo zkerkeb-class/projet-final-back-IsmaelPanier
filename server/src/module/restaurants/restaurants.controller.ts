@@ -45,6 +45,15 @@ export class RestaurantController {
     console.log('Les infos du restaurant pour ownerId :', ownerId);
 
     const restaurant = await this.restaurantService.getRestaurantByOwnerId(ownerId);
+    
+    if (!restaurant) {
+      return {
+        success: false,
+        message: 'Aucun restaurant trouvé pour cet utilisateur. Veuillez d\'abord créer votre restaurant.',
+        data: null
+      };
+    }
+
     return {
       success: true,
       data: restaurant,

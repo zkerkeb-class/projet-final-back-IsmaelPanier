@@ -4,7 +4,7 @@ import './App.css';
 import './styles/theme.css';
 
 // Pages principales
-import Home from './pages/common/Home';
+import LandingPage from './pages/LandingPage';
 import About from './pages/common/About';
 import Contact from './pages/common/Contact';
 import NavigationGuide from './pages/common/NavigationGuide';
@@ -23,6 +23,7 @@ import OrderManagement from './pages/restaurant/OrderManagement';
 import UserDashboard from './pages/user/Dashboard';
 import RestaurantList from './pages/user/RestaurantList';
 import RestaurantMenu from './pages/user/RestaurantMenu';
+import RestaurantDetails from './pages/user/RestaurantDetails';
 import OrderTracking from './pages/user/OrderTracking';
 import OrderHistory from './pages/user/OrderHistory';
 import Favorites from './pages/user/Favorites';
@@ -55,7 +56,7 @@ function App() {
             <main className="main-content">
               <Routes>
                 {/* Routes publiques principales */}
-                <Route path="/" element={<Home />} />
+                <Route path="/" element={<LandingPage />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/navigation-guide" element={<NavigationGuide />} />
@@ -104,7 +105,12 @@ function App() {
                     <RestaurantList />
                   </ProtectedRoute>
                 } />
-                <Route path="/user/restaurant/:restaurantId" element={
+                <Route path="/user/restaurant/:id" element={
+                  <ProtectedRoute requiredRole="user">
+                    <RestaurantDetails />
+                  </ProtectedRoute>
+                } />
+                <Route path="/user/restaurant/:restaurantId/menu" element={
                   <ProtectedRoute requiredRole="user">
                     <RestaurantMenu />
                   </ProtectedRoute>

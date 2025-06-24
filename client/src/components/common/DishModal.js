@@ -1,99 +1,134 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Notification from './Notification';
 import './DishModal.css';
 
-const DishModal = ({ isOpen, onClose, onSave, dish = null, isEdit = false }) => {
+const DishModal = ({ isOpen, onClose, onSave, dish, isEdit = false }) => {
   const [formData, setFormData] = useState({
-    name: dish?.name || '',
-    description: dish?.description || '',
-    category: dish?.category || 'Plats principaux',
-    basePrice: dish?.basePrice || '',
-    isAvailable: dish?.isAvailable !== false,
-    images: dish?.images || []
+    name: '',
+    description: '',
+    basePrice: '',
+    category: '',
+    isAvailable: true,
+    images: [],
+    ingredients: [],
+    allergens: [],
+    preparationTime: '',
+    difficulty: 'Facile',
+    isVegetarian: false,
+    isSpicy: false
   });
 
   const [errors, setErrors] = useState({});
-  const [uploading, setUploading] = useState(false);
+  const [currentIngredient, setCurrentIngredient] = useState('');
+  const [currentAllergen, setCurrentAllergen] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [notification, setNotification] = useState({
+    show: false,
+    message: '',
+    type: 'success'
+  });
 
   const categories = [
-    'Entrées',
-    'Plats principaux',
-    'Pizzas',
-    'Burgers',
-    'Sushis',
-    'Salades',
-    'Desserts',
-    'Boissons',
-    'Accompagnements'
+    'Entrées', 'Plats principaux', 'Pizzas', 'Burgers', 
+    'Sushis', 'Salades', 'Desserts', 'Boissons'
   ];
 
-  const handleChange = (field, value) => {
+  const commonAllergens = [
+    'Gluten', 'Lactose', 'Œufs', 'Arachides', 'Fruits à coque',
+    'Soja', 'Poisson', 'Crustacés', 'Moutarde', 'Sésame'
+  ];
+
+  useEffect(() => {
+    if (isEdit && dish) {
+      setFormData({
+        name: dish.name || '',
+        description: dish.description || '',
+        basePrice: (dish.basePrice || dish.price || '').toString(),
+        category: dish.category || '',
+        isAvailable: dish.isAvailable !== undefined ? dish.isAvailable : true,
+        images: dish.images || [],
+        ingredients: dish.ingredients || [],
+        allergens: dish.allergens || [],
+        preparationTime: dish.preparationTime || '',
+        difficulty: dish.difficulty || 'Facile',
+        isVegetarian: dish.isVegetarian || false,
+        isSpicy: dish.isSpicy || false
+      });
+    } else {
+      // Reset form for new dish
+      setFormData({
+        name: '',
+        description: '',
+        basePrice: '',
+        category: '',
+        isAvailable: true,
+        images: [],
+        ingredients: [],
+        allergens: [],
+        preparationTime: '',
+        difficulty: 'Facile',
+        isVegetarian: false,
+        isSpicy: false
+      });
+    }
+    setErrors({});
+  }, [isEdit, dish, isOpen]);
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({
+      show: true,
+      message,
+      type
+    });
+  };
+
+  const hideNotification = () => {
+    setNotification(prev => ({ ...prev, show: false }));
+  };
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
     
-    // Effacer l'erreur du champ modifié
-    if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: ''
-      }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  const handleImageUpload = async (event) => {
-    const files = Array.from(event.target.files);
-    if (files.length === 0) return;
-
-    setUploading(true);
-    const uploadedImages = [];
-
-    try {
-      for (const file of files) {
-        const formData = new FormData();
-        formData.append('image', file);
-
-        const response = await fetch('http://localhost:5000/uploads/dish-image', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          uploadedImages.push({
-            url: result.url,
-            alt: file.name,
-            isMain: false,
-            order: uploadedImages.length
-          });
-        }
-      }
-
+  const addIngredient = () => {
+    if (currentIngredient.trim() && !formData.ingredients.includes(currentIngredient.trim())) {
       setFormData(prev => ({
         ...prev,
-        images: [...prev.images, ...uploadedImages]
+        ingredients: [...prev.ingredients, currentIngredient.trim()]
       }));
-    } catch (error) {
-      console.error('Erreur lors de l\'upload:', error);
-    } finally {
-      setUploading(false);
+      setCurrentIngredient('');
     }
   };
 
-  const removeImage = (index) => {
+  const removeIngredient = (ingredient) => {
     setFormData(prev => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      ingredients: prev.ingredients.filter(ing => ing !== ingredient)
     }));
   };
 
-  const setMainImage = (index) => {
+  const addAllergen = (allergen) => {
+    if (!formData.allergens.includes(allergen)) {
+      setFormData(prev => ({
+        ...prev,
+        allergens: [...prev.allergens, allergen]
+      }));
+    }
+  };
+
+  const removeAllergen = (allergen) => {
     setFormData(prev => ({
       ...prev,
-      images: prev.images.map((img, i) => ({
-        ...img,
-        isMain: i === index
-      }))
+      allergens: prev.allergens.filter(all => all !== allergen)
     }));
   };
 
@@ -104,7 +139,11 @@ const DishModal = ({ isOpen, onClose, onSave, dish = null, isEdit = false }) => 
       newErrors.name = 'Le nom du plat est requis';
     }
 
-    if (!formData.basePrice || formData.basePrice <= 0) {
+    if (!formData.description.trim()) {
+      newErrors.description = 'La description est requise';
+    }
+
+    if (!formData.basePrice || parseFloat(formData.basePrice) <= 0) {
       newErrors.basePrice = 'Le prix doit être supérieur à 0';
     }
 
@@ -119,190 +158,264 @@ const DishModal = ({ isOpen, onClose, onSave, dish = null, isEdit = false }) => 
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    if (validateForm()) {
-      onSave({
-        ...formData,
-        basePrice: parseFloat(formData.basePrice)
-      });
-      handleClose();
+    if (!validateForm()) {
+      return;
     }
-  };
 
-  const handleClose = () => {
-    setFormData({
-      name: '',
-      description: '',
-      category: 'Plats principaux',
-      basePrice: '',
-      isAvailable: true,
-      images: []
-    });
-    setErrors({});
+    const dishData = {
+      ...formData,
+      basePrice: parseFloat(formData.basePrice),
+      preparationTime: formData.preparationTime ? parseInt(formData.preparationTime) : null
+    };
+
+    onSave(dishData);
     onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="dish-modal-overlay" onClick={handleClose}>
-      <div className="dish-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="dish-modal-overlay" onClick={onClose}>
+      <div className="dish-modal" onClick={e => e.stopPropagation()}>
         <div className="dish-modal-header">
-          <h2>{isEdit ? 'Modifier le plat' : 'Ajouter un plat'}</h2>
-          <button className="close-btn" onClick={handleClose}>
+          <h2>{isEdit ? 'Modifier le plat' : 'Ajouter un nouveau plat'}</h2>
+          <button className="dish-modal-close" onClick={onClose}>
             ✕
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="dish-modal-form">
-          <div className="form-group">
-            <label htmlFor="name">Nom du plat *</label>
-            <input
-              type="text"
-              id="name"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              placeholder="Ex: Pizza Margherita"
-              className={errors.name ? 'error' : ''}
-            />
-            {errors.name && <span className="error-message">{errors.name}</span>}
-          </div>
+          <div className="dish-modal-content">
+            {/* Basic Information */}
+            <div className="form-section">
+              <h3 className="section-title">Informations de base</h3>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="name" className="form-label">
+                    Nom du plat *
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className={`uber-input ${errors.name ? 'error' : ''}`}
+                    placeholder="Ex: Pizza Margherita"
+                  />
+                  {errors.name && <span className="error-text">{errors.name}</span>}
+                </div>
 
-          <div className="form-group">
-            <label htmlFor="category">Catégorie *</label>
-            <select
-              id="category"
-              value={formData.category}
-              onChange={(e) => handleChange('category', e.target.value)}
-              className={errors.category ? 'error' : ''}
-            >
-              {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
-            {errors.category && <span className="error-message">{errors.category}</span>}
-          </div>
+                <div className="form-group">
+                  <label htmlFor="category" className="form-label">
+                    Catégorie *
+                  </label>
+                  <select
+                    id="category"
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className={`uber-input ${errors.category ? 'error' : ''}`}
+                  >
+                    <option value="">Sélectionner une catégorie</option>
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  {errors.category && <span className="error-text">{errors.category}</span>}
+                </div>
+              </div>
 
-          <div className="form-group">
-            <label htmlFor="description">Description</label>
-            <textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => handleChange('description', e.target.value)}
-              placeholder="Décrivez votre plat, les ingrédients..."
-              rows="3"
-            />
-          </div>
+              <div className="form-group">
+                <label htmlFor="description" className="form-label">
+                  Description *
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  className={`uber-input ${errors.description ? 'error' : ''}`}
+                  rows="3"
+                  placeholder="Décrivez votre plat..."
+                />
+                {errors.description && <span className="error-text">{errors.description}</span>}
+              </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="basePrice">Prix (€) *</label>
-              <input
-                type="number"
-                id="basePrice"
-                step="0.01"
-                min="0"
-                value={formData.basePrice}
-                onChange={(e) => handleChange('basePrice', e.target.value)}
-                placeholder="12.50"
-                className={errors.basePrice ? 'error' : ''}
-              />
-              {errors.basePrice && <span className="error-message">{errors.basePrice}</span>}
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="basePrice" className="form-label">
+                    Prix (€) *
+                  </label>
+                  <input
+                    type="number"
+                    id="basePrice"
+                    name="basePrice"
+                    value={formData.basePrice}
+                    onChange={handleChange}
+                    className={`uber-input ${errors.basePrice ? 'error' : ''}`}
+                    step="0.01"
+                    min="0"
+                    placeholder="12.50"
+                  />
+                  {errors.basePrice && <span className="error-text">{errors.basePrice}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="preparationTime" className="form-label">
+                    Temps de préparation (min)
+                  </label>
+                  <input
+                    type="number"
+                    id="preparationTime"
+                    name="preparationTime"
+                    value={formData.preparationTime}
+                    onChange={handleChange}
+                    className="uber-input"
+                    min="1"
+                    placeholder="15"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="isAvailable">Disponible</label>
-              <select
-                id="isAvailable"
-                value={formData.isAvailable}
-                onChange={(e) => handleChange('isAvailable', e.target.value === 'true')}
-              >
-                <option value="true">Oui</option>
-                <option value="false">Non</option>
-              </select>
-            </div>
-          </div>
+            {/* Ingredients */}
+            <div className="form-section">
+              <h3 className="section-title">Ingrédients</h3>
+              
+              <div className="ingredient-input">
+                <input
+                  type="text"
+                  value={currentIngredient}
+                  onChange={(e) => setCurrentIngredient(e.target.value)}
+                  className="uber-input"
+                  placeholder="Ajouter un ingrédient..."
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addIngredient())}
+                />
+                <button
+                  type="button"
+                  onClick={addIngredient}
+                  className="uber-btn uber-btn-secondary"
+                >
+                  Ajouter
+                </button>
+              </div>
 
-          {/* Upload d'images */}
-          <div className="image-upload-section">
-            <h4>Images du plat</h4>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageUpload}
-              disabled={uploading}
-              style={{ marginBottom: '1rem' }}
-            />
-            {uploading && <p style={{ color: '#667eea' }}>Upload en cours...</p>}
-
-            {formData.images.length > 0 && (
-              <div className="image-preview">
-                {formData.images.map((image, index) => (
-                  <div key={index} className="image-preview-item">
-                    <img src={image.url} alt={image.alt} />
+              <div className="tags-container">
+                {formData.ingredients.map((ingredient, index) => (
+                  <span key={index} className="tag tag-ingredient">
+                    {ingredient}
                     <button
                       type="button"
-                      className="remove-image"
-                      onClick={() => removeImage(index)}
+                      onClick={() => removeIngredient(ingredient)}
+                      className="tag-remove"
                     >
                       ✕
                     </button>
-                    {!image.isMain && (
-                      <button
-                        type="button"
-                        className="set-main-btn"
-                        onClick={() => setMainImage(index)}
-                        style={{
-                          position: 'absolute',
-                          bottom: '5px',
-                          left: '5px',
-                          background: 'rgba(0, 0, 0, 0.7)',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          padding: '2px 6px',
-                          fontSize: '10px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Principal
-                      </button>
-                    )}
-                    {image.isMain && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          bottom: '5px',
-                          left: '5px',
-                          background: '#10b981',
-                          color: 'white',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '10px'
-                        }}
-                      >
-                        Principal
-                      </div>
-                    )}
-                  </div>
+                  </span>
                 ))}
               </div>
-            )}
+            </div>
+
+            {/* Allergens */}
+            <div className="form-section">
+              <h3 className="section-title">Allergènes</h3>
+              
+              <div className="allergens-grid">
+                {commonAllergens.map(allergen => (
+                  <label key={allergen} className="allergen-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={formData.allergens.includes(allergen)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          addAllergen(allergen);
+                        } else {
+                          removeAllergen(allergen);
+                        }
+                      }}
+                    />
+                    <span className="checkmark"></span>
+                    {allergen}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Properties */}
+            <div className="form-section">
+              <h3 className="section-title">Propriétés</h3>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="difficulty" className="form-label">
+                    Difficulté
+                  </label>
+                  <select
+                    id="difficulty"
+                    name="difficulty"
+                    value={formData.difficulty}
+                    onChange={handleChange}
+                    className="uber-input"
+                  >
+                    <option value="Facile">Facile</option>
+                    <option value="Moyen">Moyen</option>
+                    <option value="Difficile">Difficile</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="checkbox-row">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="isVegetarian"
+                    checked={formData.isVegetarian}
+                    onChange={handleChange}
+                  />
+                  <span className="checkmark"></span>
+                  Végétarien
+                </label>
+
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="isSpicy"
+                    checked={formData.isSpicy}
+                    onChange={handleChange}
+                  />
+                  <span className="checkmark"></span>
+                  Épicé
+                </label>
+
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="isAvailable"
+                    checked={formData.isAvailable}
+                    onChange={handleChange}
+                  />
+                  <span className="checkmark"></span>
+                  Disponible
+                </label>
+              </div>
+            </div>
           </div>
 
-          <div className="form-actions">
+          <div className="dish-modal-footer">
             <button
               type="button"
-              className="btn btn-secondary"
-              onClick={handleClose}
+              onClick={onClose}
+              className="uber-btn uber-btn-secondary"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="btn btn-primary"
+              className="uber-btn uber-btn-primary"
             >
-              {isEdit ? 'Modifier' : 'Ajouter'}
+              {isEdit ? 'Modifier le plat' : 'Ajouter le plat'}
             </button>
           </div>
         </form>

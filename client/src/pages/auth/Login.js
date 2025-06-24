@@ -18,6 +18,10 @@ const Login = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
+    // Effacer l'erreur quand l'utilisateur tape
+    if (error) {
+      setError('');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -48,13 +52,14 @@ const Login = () => {
   return (
     <div className="auth-page">
       <div className="form-container">
-        <div className="form-header">
+        <div className="login-form">
           <h2>Connexion</h2>
           <p>Connectez-vous à votre compte</p>
         </div>
 
         {error && (
           <div className="error-message">
+            <span className="material-icons">error</span>
             {error}
           </div>
         )}
@@ -62,6 +67,7 @@ const Login = () => {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="email" className="form-label">
+              <span className="material-icons">email</span>
               Email
             </label>
             <input
@@ -71,12 +77,14 @@ const Login = () => {
               className="form-input"
               value={formData.email}
               onChange={handleChange}
+              placeholder="votre.email@exemple.com"
               required
             />
           </div>
 
           <div className="form-group">
             <label htmlFor="password" className="form-label">
+              <span className="material-icons">lock</span>
               Mot de passe
             </label>
             <input
@@ -86,6 +94,7 @@ const Login = () => {
               className="form-input"
               value={formData.password}
               onChange={handleChange}
+              placeholder="Votre mot de passe"
               required
             />
           </div>
@@ -108,13 +117,8 @@ const Login = () => {
             </Link>
           </p>
           <p>
-            Vous êtes un restaurant ?{' '}
-            <Link to="/auth/restaurant-register" className="link">
-              Inscription Restaurant
-            </Link>
-          </p>
-          <p>
             <Link to="/" className="link">
+              <span className="material-icons">arrow_back</span>
               Retour à l'accueil
             </Link>
           </p>

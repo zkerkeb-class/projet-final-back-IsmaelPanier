@@ -6,7 +6,7 @@ import './AdvancedDishManagement.css';
 const API_BASE_URL = 'http://localhost:5000';
 
 const AdvancedDishManagement = () => {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const [dishes, setDishes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);

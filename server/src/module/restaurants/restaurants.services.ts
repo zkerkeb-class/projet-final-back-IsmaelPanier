@@ -78,11 +78,12 @@ export class RestaurantService {
     return updated;
   }
 
-  async getRestaurantByOwnerId(ownerId: string): Promise<Restaurant> {
+  async getRestaurantByOwnerId(ownerId: string): Promise<Restaurant | null> {
     const restaurant = await this.restaurantModel.findOne({ ownerId: new Types.ObjectId(ownerId) }).exec();
 
     if (!restaurant) {
-      throw new NotFoundException('Aucun restaurant trouvé pour cet utilisateur');
+      console.log('📥 Aucun restaurant trouvé pour ownerId:', ownerId);
+      return null;
     }
 
     console.log('📥 Restaurant récupéré pour ownerId:', ownerId);
@@ -93,8 +94,18 @@ export class RestaurantService {
 
   // Créer des restaurants de test
   private async createSampleRestaurants(): Promise<void> {
+    // Créer des ObjectId valides pour les restaurants de test
+    const validObjectIds = [
+      new Types.ObjectId(),
+      new Types.ObjectId(),
+      new Types.ObjectId(),
+      new Types.ObjectId(),
+      new Types.ObjectId()
+    ];
+
     const sampleRestaurants = [
       {
+        _id: validObjectIds[0], // Utiliser un ObjectId valide
         name: 'Pizza Palace',
         description: 'Les meilleures pizzas de la ville avec des ingrédients frais et locaux',
         cuisine: 'Italienne',
@@ -119,6 +130,7 @@ export class RestaurantService {
         ownerId: new Types.ObjectId('507f1f77bcf86cd799439011') // ID fictif
       },
       {
+        _id: validObjectIds[1], // Utiliser un ObjectId valide
         name: 'Sushi Express',
         description: 'Sushis frais et authentiques préparés par nos chefs japonais',
         cuisine: 'Japonaise',
@@ -143,6 +155,7 @@ export class RestaurantService {
         ownerId: new Types.ObjectId('507f1f77bcf86cd799439012') // ID fictif
       },
       {
+        _id: validObjectIds[2], // Utiliser un ObjectId valide
         name: 'Burger House',
         description: 'Burgers gourmets avec des viandes de qualité et des frites maison',
         cuisine: 'Américaine',
@@ -167,6 +180,7 @@ export class RestaurantService {
         ownerId: new Types.ObjectId('507f1f77bcf86cd799439013') // ID fictif
       },
       {
+        _id: validObjectIds[3], // Utiliser un ObjectId valide
         name: 'Le Bistrot Français',
         description: 'Cuisine française traditionnelle dans un cadre chaleureux',
         cuisine: 'Française',
@@ -191,6 +205,7 @@ export class RestaurantService {
         ownerId: new Types.ObjectId('507f1f77bcf86cd799439014') // ID fictif
       },
       {
+        _id: validObjectIds[4], // Utiliser un ObjectId valide
         name: 'Taco Loco',
         description: 'Tacos mexicains authentiques avec des saveurs épicées',
         cuisine: 'Mexicaine',
@@ -222,5 +237,6 @@ export class RestaurantService {
     }
     
     console.log('✅ Restaurants de test créés avec succès');
+    console.log('📋 IDs des restaurants créés:', validObjectIds.map(id => id.toString()));
   }
 }

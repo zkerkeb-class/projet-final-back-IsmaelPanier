@@ -1,0 +1,161 @@
+/* Restaurant Modal Uber Eats Style */
+
+.modal-header-buttons {
+  position: absolute;
+  top: var(--spacing-3);
+  right: var(--spacing-3);
+  display: flex;
+  gap: var(--spacing-2);
+}
+
+.modal-favorite-btn {
+  width: 2rem;
+  height: 2rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--gray-700);
+}
+
+.modal-favorite-btn:hover {
+  background: white;
+  transform: scale(1.1);
+}
+
+.modal-favorite-btn.active {
+  background: white;
+  color: var(--uber-red);
+}
+
+.modal-restaurant-info {
+  margin-bottom: var(--spacing-4);
+}
+
+.modal-restaurant-name {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-1);
+}
+
+.modal-restaurant-cuisine {
+  color: var(--gray-600);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-3);
+}
+
+.modal-restaurant-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  font-size: var(--font-size-sm);
+  flex-wrap: wrap;
+}
+
+.modal-reviews {
+  color: var(--gray-500);
+}
+
+.modal-delivery-time {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  color: var(--gray-600);
+}
+
+.modal-delivery-fee {
+  color: var(--gray-600);
+}
+
+.modal-min-order {
+  background-color: var(--gray-50);
+  padding: var(--spacing-3);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-4);
+}
+
+.modal-min-order-label {
+  font-size: var(--font-size-xs);
+  color: var(--gray-600);
+  margin-bottom: var(--spacing-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.modal-min-order-value {
+  font-weight: 600;
+  color: var(--gray-900);
+  font-size: var(--font-size-base);
+}
+
+.modal-promo {
+  margin-bottom: var(--spacing-4);
+}
+
+.modal-promo-content {
+  background-color: #fef3c7;
+  border: 1px solid #fbbf24;
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.modal-promo-icon {
+  font-size: var(--font-size-base);
+}
+
+.modal-promo-text {
+  color: #92400e;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  margin: 0;
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.modal-view-menu-btn {
+  width: 100%;
+}
+
+.modal-secondary-actions {
+  display: flex;
+  gap: var(--spacing-3);
+}
+
+.modal-secondary-actions .uber-btn {
+  flex: 1;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .modal-restaurant-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-2);
+  }
+  
+  .modal-secondary-actions {
+    flex-direction: column;
+  }
+  
+  .modal-header-buttons {
+    gap: var(--spacing-1);
+  }
+  
+  .modal-favorite-btn,
+  .uber-modal-close {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+} 
