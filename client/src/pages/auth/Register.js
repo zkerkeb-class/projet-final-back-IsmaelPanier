@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-toastify';
 import './Register.css';
 
 const Register = () => {
@@ -15,64 +16,147 @@ const Register = () => {
     role: 'user',
   });
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
   
   const { register } = useAuth();
   const navigate = useNavigate();
 
+  const validateForm = () => {
+    const errors = {};
+    
+    // Validation du prénom
+    if (!formData.firstName.trim()) {
+      errors.firstName = 'Le prénom est requis';
+    } else if (formData.firstName.trim().length < 2) {
+      errors.firstName = 'Le prénom doit contenir au moins 2 caractères';
+    }
+    
+    // Validation du nom
+    if (!formData.lastName.trim()) {
+      errors.lastName = 'Le nom est requis';
+    } else if (formData.lastName.trim().length < 2) {
+      errors.lastName = 'Le nom doit contenir au moins 2 caractères';
+    }
+    
+    // Validation de l'email
+    if (!formData.email.trim()) {
+      errors.email = 'L\'email est requis';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = 'Format d\'email invalide (ex: nom@exemple.com)';
+    }
+    
+    // Validation du mot de passe
+    if (!formData.password.trim()) {
+      errors.password = 'Le mot de passe est requis';
+    } else if (formData.password.length < 6) {
+      errors.password = 'Le mot de passe doit contenir au moins 6 caractères';
+    } else if (!/(?=.*[a-z])/.test(formData.password)) {
+      errors.password = 'Le mot de passe doit contenir au moins une lettre minuscule';
+    }
+    
+    // Validation de la confirmation
+    if (!formData.confirmPassword.trim()) {
+      errors.confirmPassword = 'Veuillez confirmer votre mot de passe';
+    } else if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Les mots de passe ne correspondent pas';
+    }
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleRoleSelect = (role) => {
+    if (role === 'restaurant') {
+      // Rediriger vers l'inscription restaurant spécialisée
+      navigate('/restaurant-register');
+      return;
+    }
+    
     setSelectedRole(role);
     setFormData(prev => ({ ...prev, role }));
     setStep('form');
+    setError('');
+    setFieldErrors({});
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+    
+    // Effacer les erreurs quand l'utilisateur tape
+    if (error) {
+      setError('');
+    }
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error('Veuillez corriger les erreurs dans le formulaire');
+      return;
+    }
+
     setError('');
-
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères');
-      return;
-    }
-
     setLoading(true);
 
     try {
+      console.log('📝 Tentative d\'inscription pour:', formData.email);
+      
       const userData = {
-        email: formData.email,
+        email: formData.email.trim().toLowerCase(),
         password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
         role: formData.role,
       };
 
       const result = await register(userData);
       
       if (result.success) {
-        // Redirection vers le dashboard selon le rôle
-        if (formData.role === 'restaurant') {
-          navigate('/restaurant/dashboard');
-        } else {
-          navigate('/user/dashboard');
-        }
+        toast.success(`🎉 Inscription réussie ! Bienvenue ${userData.firstName} !`);
+        
+        // Redirection vers le dashboard selon le rôle avec délai
+        setTimeout(() => {
+          if (formData.role === 'restaurant') {
+            navigate('/restaurant/dashboard');
+          } else {
+            navigate('/user/dashboard');
+          }
+        }, 1500);
       } else {
-        setError(result.error);
+        // Messages d'erreur spécifiques
+        let errorMessage = result.error;
+        
+        if (errorMessage.includes('déjà utilisé') || errorMessage.includes('already exists')) {
+          errorMessage = '❌ Cette adresse email est déjà utilisée. Connectez-vous ou utilisez un autre email.';
+          setFieldErrors({ email: 'Email déjà utilisé' });
+        } else if (errorMessage.includes('mot de passe') || errorMessage.includes('password')) {
+          errorMessage = '❌ Mot de passe invalide. Utilisez au moins 6 caractères.';
+          setFieldErrors({ password: 'Mot de passe invalide' });
+        } else if (errorMessage.includes('email')) {
+          errorMessage = '❌ Format d\'email invalide.';
+          setFieldErrors({ email: 'Format invalide' });
+        }
+        
+        setError(errorMessage);
+        toast.error(errorMessage);
+        
+        // Vider les mots de passe en cas d'erreur
+        setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
       }
     } catch (err) {
-      setError('Une erreur est survenue lors de l\'inscription');
+      const errorMsg = '❌ Erreur d\'inscription. Vérifiez votre connexion internet.';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      console.error('Erreur inscription:', err);
     } finally {
       setLoading(false);
     }
@@ -82,6 +166,15 @@ const Register = () => {
     setStep('select');
     setSelectedRole('');
     setError('');
+    setFieldErrors({});
+    setFormData({
+      email: '',
+      password: '',
+      confirmPassword: '',
+      firstName: '',
+      lastName: '',
+      role: 'user',
+    });
   };
 
   // Étape 1: Sélection du type de compte
@@ -172,7 +265,8 @@ const Register = () => {
 
         {error && (
           <div className="error-message">
-            {error}
+            <span className="material-icons">error</span>
+            <span>{error}</span>
           </div>
         )}
 
@@ -180,84 +274,109 @@ const Register = () => {
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="firstName" className="form-label">
+                <span className="material-icons">person</span>
                 Prénom *
               </label>
               <input
                 type="text"
                 id="firstName"
                 name="firstName"
-                className="form-input"
+                className={`form-input ${fieldErrors.firstName ? 'error' : ''}`}
                 value={formData.firstName}
                 onChange={handleChange}
                 placeholder="Votre prénom"
+                autoComplete="given-name"
                 required
               />
+              {fieldErrors.firstName && (
+                <span className="field-error">{fieldErrors.firstName}</span>
+              )}
             </div>
 
             <div className="form-group">
               <label htmlFor="lastName" className="form-label">
+                <span className="material-icons">person</span>
                 Nom *
               </label>
               <input
                 type="text"
                 id="lastName"
                 name="lastName"
-                className="form-input"
+                className={`form-input ${fieldErrors.lastName ? 'error' : ''}`}
                 value={formData.lastName}
                 onChange={handleChange}
                 placeholder="Votre nom"
+                autoComplete="family-name"
                 required
               />
+              {fieldErrors.lastName && (
+                <span className="field-error">{fieldErrors.lastName}</span>
+              )}
             </div>
           </div>
 
           <div className="form-group">
             <label htmlFor="email" className="form-label">
-              Email *
+              <span className="material-icons">email</span>
+              Adresse email *
             </label>
             <input
               type="email"
               id="email"
               name="email"
-              className="form-input"
+              className={`form-input ${fieldErrors.email ? 'error' : ''}`}
               value={formData.email}
               onChange={handleChange}
               placeholder="votre.email@exemple.com"
+              autoComplete="email"
               required
             />
+            {fieldErrors.email && (
+              <span className="field-error">{fieldErrors.email}</span>
+            )}
           </div>
 
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="password" className="form-label">
+                <span className="material-icons">lock</span>
                 Mot de passe *
               </label>
               <input
                 type="password"
                 id="password"
                 name="password"
-                className="form-input"
+                className={`form-input ${fieldErrors.password ? 'error' : ''}`}
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Minimum 6 caractères"
+                autoComplete="new-password"
                 required
               />
+              {fieldErrors.password && (
+                <span className="field-error">{fieldErrors.password}</span>
+              )}
             </div>
 
             <div className="form-group">
               <label htmlFor="confirmPassword" className="form-label">
+                <span className="material-icons">lock_outline</span>
                 Confirmer le mot de passe *
               </label>
               <input
                 type="password"
                 id="confirmPassword"
                 name="confirmPassword"
-                className="form-input"
+                className={`form-input ${fieldErrors.confirmPassword ? 'error' : ''}`}
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 placeholder="Répétez votre mot de passe"
+                autoComplete="new-password"
                 required
               />
+              {fieldErrors.confirmPassword && (
+                <span className="field-error">{fieldErrors.confirmPassword}</span>
+              )}
             </div>
           </div>
 
@@ -266,7 +385,17 @@ const Register = () => {
             className="btn btn-primary btn-large"
             disabled={loading}
           >
-            {loading ? 'Inscription en cours...' : 'Créer mon compte'}
+            {loading ? (
+              <>
+                <span className="loading-spinner"></span>
+                Inscription en cours...
+              </>
+            ) : (
+              <>
+                <span className="material-icons">person_add</span>
+                Créer mon compte {selectedRole === 'restaurant' ? 'restaurant' : 'client'}
+              </>
+            )}
           </button>
         </form>
 

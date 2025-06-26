@@ -80,7 +80,7 @@ export class CreateDishDto {
   priceOptions?: PriceOptionDto[];
 
   @IsOptional()
-  @IsEnum(['Entrée', 'Plat principal', 'Dessert', 'Boisson', 'Accompagnement', 'Menu du jour'])
+  @IsEnum(['Entrées', 'Plats principaux', 'Pizzas', 'Burgers', 'Sushis', 'Salades', 'Desserts', 'Boissons'])
   category?: string;
 
   @IsOptional()

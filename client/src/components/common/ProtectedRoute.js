@@ -8,9 +8,11 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
   // Afficher un loader pendant la vérification de l'authentification
   if (loading) {
+    console.log('Loading:', loading);
     return (
       <div className="loading-container">
-        <div className="loading-spinner">Chargement...</div>
+        <div className="loading-spinner"></div>
+        <p>Chargement...</p>
       </div>
     );
   }

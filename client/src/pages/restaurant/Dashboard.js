@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
+import { toast } from 'react-toastify';
 import './Dashboard.css';
 
 // URL de l'API backend
@@ -11,406 +13,428 @@ console.log('🏪 Dashboard Restaurant - Connexion API:', API_BASE_URL);
 
 const RestaurantDashboard = () => {
   const { user, token } = useAuth();
+  const { socket, isConnected } = useSocket();
   const navigate = useNavigate();
-  const [selectedPeriod, setSelectedPeriod] = useState('7days');
+  
+  // États du dashboard
   const [restaurantData, setRestaurantData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [stats] = useState({
-    revenue: 3874,
-    orders: 226,
-    customers: 89,
-    rating: 4.7
+  const [stats, setStats] = useState({
+    todayOrders: 0,
+    todayRevenue: 0,
+    pendingOrders: 0,
+    totalDishes: 0,
+    averageRating: 0,
+    monthlyRevenue: 0
   });
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [topDishes, setTopDishes] = useState([]);
+  const [isOpen, setIsOpen] = useState(true);
 
-  // Données d'exemple pour les graphiques
-  const salesData = [
-    { name: 'Lun', ventes: 420, commandes: 24 },
-    { name: 'Mar', ventes: 380, commandes: 18 },
-    { name: 'Mer', ventes: 520, commandes: 32 },
-    { name: 'Jeu', ventes: 480, commandes: 28 },
-    { name: 'Ven', ventes: 680, commandes: 41 },
-    { name: 'Sam', ventes: 750, commandes: 45 },
-    { name: 'Dim', ventes: 620, commandes: 38 }
+  // Données de démonstration
+  const demoStats = {
+    todayOrders: 12,
+    todayRevenue: 245.80,
+    pendingOrders: 3,
+    totalDishes: 24,
+    averageRating: 4.7,
+    monthlyRevenue: 8740.50
+  };
+
+  const demoRecentOrders = [
+    { 
+      id: '#12847', 
+      customer: 'Marie L.', 
+      items: 'Pizza Margherita x2, Coca Cola x1', 
+      total: '24.50€', 
+      status: 'pending', 
+      time: '14:32',
+      estimatedDelivery: '15:02'
+    },
+    { 
+      id: '#12846', 
+      customer: 'Thomas M.', 
+      items: 'Burger Classic, Frites', 
+      total: '18.90€', 
+      status: 'preparing', 
+      time: '14:28',
+      estimatedDelivery: '14:58'
+    },
+    { 
+      id: '#12845', 
+      customer: 'Sophie R.', 
+      items: 'Salade César, Eau minérale', 
+      total: '12.50€', 
+      status: 'ready', 
+      time: '14:15',
+      estimatedDelivery: '14:45'
+    }
   ];
 
-  const recentOrders = [
-    { id: '#12847', customer: 'Marie L.', items: 'Pizza Margherita x2', total: '24.50€', status: 'delivered', time: '14:32' },
-    { id: '#12846', customer: 'Thomas M.', items: 'Burger Menu', total: '18.90€', status: 'preparing', time: '14:28' },
-    { id: '#12845', customer: 'Sophie R.', items: 'Salade César', total: '12.50€', status: 'delivered', time: '14:15' },
-    { id: '#12844', customer: 'Antoine B.', items: 'Sushi Mix x1', total: '32.00€', status: 'on-way', time: '14:10' },
-    { id: '#12843', customer: 'Claire D.', items: 'Pizza 4 Fromages', total: '16.90€', status: 'preparing', time: '14:05' }
-  ];
-
-  const topDishes = [
+  const demoTopDishes = [
     { name: 'Pizza Margherita', sales: 45, revenue: '562.50€', trend: '+12%' },
     { name: 'Burger Classic', sales: 38, revenue: '456.20€', trend: '+8%' },
     { name: 'Salade César', sales: 32, revenue: '400.00€', trend: '+15%' },
-    { name: 'Sushi Mix', sales: 28, revenue: '896.00€', trend: '+5%' },
     { name: 'Pizza 4 Fromages', sales: 25, revenue: '422.50€', trend: '-3%' }
   ];
 
+  // Récupération des données du restaurant
   const fetchRestaurantData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/restaurant/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setRestaurantData(data.data);
-        console.log('✅ Données restaurant chargées:', data.data);
-      } else {
-        // Données d'exemple si l'API ne répond pas
+      
+      if (!token) {
         setRestaurantData({
           name: 'Mon Restaurant',
           cuisine: 'Française',
           rating: 4.7,
-          address: {
-            street: '123 Rue de la Paix',
-            city: 'Paris'
-          }
+          address: { city: 'Paris' }
         });
-        console.log('📋 Utilisation des données d\'exemple');
+        setStats(demoStats);
+        setRecentOrders(demoRecentOrders);
+        setTopDishes(demoTopDishes);
+        setLoading(false);
+        return;
       }
+      
+      console.log('🔍 Tentative de récupération des données du restaurant...');
+      const response = await fetch(`${API_BASE_URL}/restaurant/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('📡 Réponse API restaurant/me:', response.status, response.statusText);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Données restaurant reçues:', data);
+        if (data.success && data.data) {
+          setRestaurantData(data.data);
+          setIsOpen(data.data.isOpen !== false);
+        } else {
+          console.log('⚠️ Pas de données restaurant, utilisation des données par défaut');
+          setRestaurantData({
+            name: user?.name || 'Mon Restaurant',
+            cuisine: 'Française',
+            rating: 4.7,
+            address: { city: 'Paris' }
+          });
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.log('❌ Erreur API restaurant/me:', errorData);
+        setRestaurantData({
+          name: user?.name || 'Mon Restaurant',
+          cuisine: 'Française',
+          rating: 4.7,
+          address: { city: 'Paris' }
+        });
+      }
+
+      // Utiliser les données de démonstration pour l'instant
+      setStats(demoStats);
+      setRecentOrders(demoRecentOrders);
+      setTopDishes(demoTopDishes);
+
     } catch (error) {
       console.error('❌ Erreur chargement restaurant:', error);
       setRestaurantData({
-        name: 'Mon Restaurant',
+        name: user?.name || 'Mon Restaurant',
         cuisine: 'Française',
-        rating: 4.7
+        rating: 4.7,
+        address: { city: 'Paris' }
       });
+      setStats(demoStats);
+      setRecentOrders(demoRecentOrders);
+      setTopDishes(demoTopDishes);
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, user, demoStats, demoRecentOrders, demoTopDishes]);
 
   useEffect(() => {
     fetchRestaurantData();
   }, [fetchRestaurantData]);
 
+  // Écouter les nouvelles commandes via WebSocket
+  useEffect(() => {
+    if (socket) {
+      socket.on('new-order', (data) => {
+        toast.info(`🆕 Nouvelle commande reçue ! #${data.order.id}`);
+        // Mettre à jour les statistiques
+        setStats(prev => ({
+          ...prev,
+          todayOrders: prev.todayOrders + 1,
+          pendingOrders: prev.pendingOrders + 1
+        }));
+      });
+
+      return () => {
+        socket.off('new-order');
+      };
+    }
+  }, [socket]);
+
+  // Fonctions utilitaires
   const getStatusClass = (status) => {
     switch(status) {
-      case 'delivered': return 'status-delivered';
+      case 'pending': return 'status-pending';
+      case 'confirmed': return 'status-confirmed';
       case 'preparing': return 'status-preparing';
-      case 'on-way': return 'status-on-way';
-      default: return 'status-default';
+      case 'ready': return 'status-ready';
+      case 'on-way': return 'status-delivering';
+      case 'delivered': return 'status-delivered';
+      case 'cancelled': return 'status-cancelled';
+      default: return 'status-pending';
     }
   };
 
   const getStatusText = (status) => {
     switch(status) {
-      case 'delivered': return 'Livré';
+      case 'pending': return 'En attente';
+      case 'confirmed': return 'Confirmée';
       case 'preparing': return 'En préparation';
-      case 'on-way': return 'En route';
+      case 'ready': return 'Prête';
+      case 'on-way': return 'En livraison';
+      case 'delivered': return 'Livrée';
+      case 'cancelled': return 'Annulée';
       default: return status;
     }
   };
 
-  const handleQuickAction = (action) => {
-    switch(action) {
-      case 'add-dish':
-        navigate('/restaurant/dishes');
-        break;
-      case 'view-orders':
-        navigate('/restaurant/orders');
-        break;
-      case 'view-menu':
-        navigate('/restaurant/dishes');
-        break;
-      case 'settings':
-        navigate('/restaurant/profile');
-        break;
-      default:
-        console.log('Action:', action);
-    }
+  const toggleRestaurantStatus = () => {
+    setIsOpen(!isOpen);
+    toast.success(isOpen ? '🏪 Restaurant fermé' : '🏪 Restaurant ouvert');
   };
 
   if (loading) {
     return (
-      <div className="restaurant-dashboard">
-        <div className="uber-loading">
-          <div className="uber-spinner"></div>
-          <p>Chargement du tableau de bord...</p>
-        </div>
+      <div className="dashboard-loading">
+        <div className="loading-spinner"></div>
+        <p>Chargement du dashboard...</p>
       </div>
     );
   }
 
   return (
     <div className="restaurant-dashboard">
-      {/* Header */}
-      <header className="uber-header">
-        <div className="uber-header-content">
-          <div className="app-logo">
-            <div className="app-logo-icon">🏪</div>
-            <span>Restaurant Dashboard</span>
+      {/* Section de test pour Fatou */}
+      <div className="test-section" style={{
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        color: 'white',
+        padding: '1rem',
+        marginBottom: '1rem',
+        borderRadius: '12px',
+        textAlign: 'center'
+      }}>
+        <h2>🎉 Bienvenue Fatou !</h2>
+        <p>Test de connexion au dashboard restaurant</p>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginTop: '1rem' }}>
+          <div>
+            <strong>Utilisateur:</strong> {user?.name || 'Non défini'}
           </div>
-          
-          <div className="header-user-info">
-            <span className="welcome-text">Bonjour {user?.firstName || 'Restaurateur'} !</span>
-            <div className="restaurant-info">
-              <span className="restaurant-name">{restaurantData?.name || 'Mon Restaurant'}</span>
-              <div className="restaurant-rating">
-                ⭐ {restaurantData?.rating || 4.7}
+          <div>
+            <strong>Email:</strong> {user?.email || 'Non défini'}
               </div>
+          <div>
+            <strong>Rôle:</strong> {user?.role || 'Non défini'}
             </div>
+          <div>
+            <strong>Token:</strong> {token ? '✅ Présent' : '❌ Absent'}
           </div>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="dashboard-main">
-        <div className="dashboard-container">
-          {/* Welcome Section */}
-          <section className="welcome-section">
-            <div className="welcome-content">
-              <h1 className="welcome-title">Tableau de bord</h1>
-              <p className="welcome-subtitle">
-                Gérez votre restaurant et suivez vos performances
-              </p>
+        <div style={{ marginTop: '1rem', fontSize: '0.9rem', opacity: 0.8 }}>
+          Restaurant: {restaurantData?.name || 'Chargement...'}
+          </div>
             </div>
             
-            <div className="period-selector">
-              <select 
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="uber-input"
-              >
-                <option value="today">Aujourd'hui</option>
-                <option value="7days">7 derniers jours</option>
-                <option value="30days">30 derniers jours</option>
-                <option value="90days">3 derniers mois</option>
-              </select>
+      {/* Header du Dashboard */}
+      <header className="dashboard-header">
+        <div className="header-content">
+          <div className="restaurant-info">
+            <div className="restaurant-avatar">
+              🏪
             </div>
-          </section>
-
-          {/* Quick Actions */}
-          <section className="quick-actions-section">
-            <h2 className="section-title">Actions rapides</h2>
-            <div className="quick-actions-grid">
+            <div className="restaurant-details">
+              <h1>{restaurantData?.name || 'Mon Restaurant'}</h1>
+              <p>{restaurantData?.cuisine || 'Cuisine française'} • {restaurantData?.address?.city || 'Paris'}</p>
+              <div className="restaurant-status">
+                <span className={`status-indicator ${isOpen ? 'open' : 'closed'}`}>
+                  {isOpen ? '🟢 Ouvert' : '🔴 Fermé'}
+                </span>
               <button 
-                onClick={() => handleQuickAction('add-dish')}
-                className="quick-action-card"
+                  onClick={toggleRestaurantStatus}
+                  className="toggle-status-btn"
               >
-                <div className="quick-action-icon">➕</div>
-                <div className="quick-action-content">
-                  <h3>Ajouter un plat</h3>
-                  <p>Enrichissez votre menu</p>
+                  {isOpen ? 'Fermer' : 'Ouvrir'}
+                </button>
                 </div>
-              </button>
-
-              <button 
-                onClick={() => handleQuickAction('view-orders')}
-                className="quick-action-card"
-              >
-                <div className="quick-action-icon">📋</div>
-                <div className="quick-action-content">
-                  <h3>Voir les commandes</h3>
-                  <p>Gérez vos commandes</p>
                 </div>
-              </button>
-
-              <button 
-                onClick={() => handleQuickAction('view-menu')}
-                className="quick-action-card"
-              >
-                <div className="quick-action-icon">🍽️</div>
-                <div className="quick-action-content">
-                  <h3>Gérer le menu</h3>
-                  <p>Modifiez vos plats</p>
                 </div>
-              </button>
-
-              <button 
-                onClick={() => handleQuickAction('settings')}
-                className="quick-action-card"
-              >
-                <div className="quick-action-icon">⚙️</div>
-                <div className="quick-action-content">
-                  <h3>Paramètres</h3>
-                  <p>Configuration</p>
-                </div>
-              </button>
+          
+          <div className="header-actions">
+            <div className="socket-status">
+              <span className={`connection-dot ${isConnected ? 'connected' : 'disconnected'}`}></span>
+              {isConnected ? 'Connecté' : 'Déconnecté'}
             </div>
-          </section>
+            <Link to="/restaurant/profile" className="btn btn-outline">
+              ⚙️ Paramètres
+            </Link>
+                </div>
+              </div>
+      </header>
 
-          {/* KPI Cards */}
-          <section className="kpi-section">
-            <h2 className="section-title">Performances</h2>
-            <div className="kpi-grid">
-              <div className="uber-card kpi-card">
-                <div className="kpi-content">
-                  <div className="kpi-info">
-                    <p className="kpi-label">Chiffre d'affaires</p>
-                    <p className="kpi-value">{stats.revenue.toLocaleString()}€</p>
-                    <p className="kpi-trend positive">📈 +12.5% vs semaine dernière</p>
-                  </div>
-                  <div className="kpi-icon revenue">💰</div>
+      {/* Statistiques principales */}
+      <section className="stats-section">
+        <div className="stats-grid">
+          <div className="stat-card primary">
+            <div className="stat-icon">📦</div>
+            <div className="stat-content">
+              <h3>{stats.todayOrders}</h3>
+              <p>Commandes aujourd'hui</p>
+              <span className="stat-trend positive">+15% vs hier</span>
                 </div>
               </div>
 
-              <div className="uber-card kpi-card">
-                <div className="kpi-content">
-                  <div className="kpi-info">
-                    <p className="kpi-label">Commandes</p>
-                    <p className="kpi-value">{stats.orders}</p>
-                    <p className="kpi-trend positive">📈 +8.3% vs semaine dernière</p>
-                  </div>
-                  <div className="kpi-icon orders">🛍️</div>
+          <div className="stat-card success">
+            <div className="stat-icon">💰</div>
+            <div className="stat-content">
+              <h3>{stats.todayRevenue.toFixed(2)}€</h3>
+              <p>Revenus aujourd'hui</p>
+              <span className="stat-trend positive">+8% vs hier</span>
                 </div>
               </div>
 
-              <div className="uber-card kpi-card">
-                <div className="kpi-content">
-                  <div className="kpi-info">
-                    <p className="kpi-label">Clients uniques</p>
-                    <p className="kpi-value">{stats.customers}</p>
-                    <p className="kpi-trend positive">📈 +15.2% vs semaine dernière</p>
-                  </div>
-                  <div className="kpi-icon customers">👥</div>
+          <div className="stat-card warning">
+            <div className="stat-icon">⏳</div>
+            <div className="stat-content">
+              <h3>{stats.pendingOrders}</h3>
+              <p>Commandes en attente</p>
+              <span className="stat-trend neutral">En temps réel</span>
                 </div>
               </div>
-
-              <div className="uber-card kpi-card">
-                <div className="kpi-content">
-                  <div className="kpi-info">
-                    <p className="kpi-label">Note moyenne</p>
-                    <p className="kpi-value">{stats.rating}/5</p>
-                    <p className="kpi-trend positive">⭐ +0.2 vs semaine dernière</p>
-                  </div>
-                  <div className="kpi-icon rating">⭐</div>
-                </div>
-              </div>
+          
+          <div className="stat-card info">
+            <div className="stat-icon">⭐</div>
+            <div className="stat-content">
+              <h3>{stats.averageRating}</h3>
+              <p>Note moyenne</p>
+              <span className="stat-trend positive">+0.2 vs hier</span>
             </div>
-          </section>
-
-          {/* Charts and Recent Activity */}
-          <div className="dashboard-grid">
-            {/* Sales Chart */}
-            <section className="uber-card chart-card">
-              <div className="card-header">
-                <h3>Ventes de la semaine</h3>
-                <button className="uber-btn uber-btn-ghost">📊 Détails</button>
-              </div>
-              <div className="chart-container">
-                <div className="simple-chart">
-                  {salesData.map((data, index) => (
-                    <div key={index} className="chart-bar">
-                      <div 
-                        className="bar"
-                        style={{ 
-                          height: `${(data.ventes / Math.max(...salesData.map(d => d.ventes))) * 100}%` 
-                        }}
-                      ></div>
-                      <span className="bar-label">{data.name}</span>
-                      <span className="bar-value">{data.ventes}€</span>
-                    </div>
-                  ))}
                 </div>
               </div>
             </section>
 
-            {/* Recent Orders */}
-            <section className="uber-card orders-card">
+      {/* Contenu principal */}
+      <main className="dashboard-main">
+        <div className="dashboard-grid">
+          {/* Commandes récentes */}
+          <section className="dashboard-card orders-section">
               <div className="card-header">
-                <h3>Commandes récentes</h3>
-                <Link to="/restaurant/orders" className="uber-btn uber-btn-ghost">
-                  Voir tout
+              <h2>📋 Commandes récentes</h2>
+              <Link to="/restaurant/orders" className="btn btn-primary btn-sm">
+                Voir toutes
                 </Link>
               </div>
+            
               <div className="orders-list">
-                {recentOrders.map((order, index) => (
-                  <div key={index} className="order-item">
-                    <div className="order-info">
+              {recentOrders.map((order) => (
+                <div key={order.id} className="order-item">
                       <div className="order-header">
                         <span className="order-id">{order.id}</span>
-                        <span className="order-time">{order.time}</span>
+                    <span className={`order-status ${getStatusClass(order.status)}`}>
+                      {getStatusText(order.status)}
+                    </span>
                       </div>
                       <div className="order-details">
-                        <span className="customer-name">{order.customer}</span>
-                        <span className="order-items">{order.items}</span>
-                      </div>
-                    </div>
+                    <p className="customer-name">{order.customer}</p>
+                    <p className="order-items">{order.items}</p>
                     <div className="order-meta">
+                      <span className="order-time">{order.time}</span>
                       <span className="order-total">{order.total}</span>
-                      <span className={`order-status ${getStatusClass(order.status)}`}>
-                        {getStatusText(order.status)}
-                      </span>
+                    </div>
                     </div>
                   </div>
                 ))}
               </div>
             </section>
-          </div>
 
-          {/* Top Dishes */}
-          <section className="uber-card top-dishes-card">
+          {/* Plats populaires */}
+          <section className="dashboard-card dishes-section">
             <div className="card-header">
-              <h3>Plats les plus vendus</h3>
-              <Link to="/restaurant/dishes" className="uber-btn uber-btn-ghost">
-                Gérer le menu
+              <h2>🍽️ Plats populaires</h2>
+              <Link to="/restaurant/dishes" className="btn btn-primary btn-sm">
+                Gérer les plats
               </Link>
             </div>
-            <div className="top-dishes-list">
+            
+            <div className="dishes-list">
               {topDishes.map((dish, index) => (
                 <div key={index} className="dish-item">
                   <div className="dish-rank">#{index + 1}</div>
                   <div className="dish-info">
-                    <h4 className="dish-name">{dish.name}</h4>
-                    <div className="dish-stats">
-                      <span className="dish-sales">{dish.sales} vendus</span>
-                      <span className="dish-revenue">{dish.revenue}</span>
-                    </div>
+                    <h4>{dish.name}</h4>
+                    <p>{dish.sales} ventes • {dish.revenue}</p>
                   </div>
-                  <div className={`dish-trend ${dish.trend.startsWith('+') ? 'positive' : 'negative'}`}>
+                  <div className="dish-trend">
+                    <span className={`trend ${dish.trend.startsWith('+') ? 'positive' : 'negative'}`}>
                     {dish.trend}
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
           </section>
 
-          {/* Navigation Links */}
-          <section className="navigation-section">
-            <h2 className="section-title">Gestion du restaurant</h2>
-            <div className="navigation-grid">
-              <Link to="/restaurant/dishes" className="nav-card">
-                <div className="nav-card-icon">🍽️</div>
-                <div className="nav-card-content">
-                  <h3>Gestion des plats</h3>
-                  <p>Ajoutez, modifiez et organisez votre menu</p>
+          {/* Actions rapides */}
+          <section className="dashboard-card quick-actions">
+            <div className="card-header">
+              <h2>⚡ Actions rapides</h2>
                 </div>
-                <div className="nav-card-arrow">→</div>
+            
+            <div className="actions-grid">
+              <Link to="/restaurant/dishes" className="action-card">
+                <div className="action-icon">🍽️</div>
+                <h3>Gérer les plats</h3>
+                <p>Ajouter, modifier ou supprimer des plats</p>
               </Link>
 
-              <Link to="/restaurant/orders" className="nav-card">
-                <div className="nav-card-icon">📋</div>
-                <div className="nav-card-content">
-                  <h3>Gestion des commandes</h3>
-                  <p>Suivez et gérez toutes vos commandes</p>
-                </div>
-                <div className="nav-card-arrow">→</div>
+              <Link to="/restaurant/orders" className="action-card">
+                <div className="action-icon">📦</div>
+                <h3>Gérer les commandes</h3>
+                <p>Voir et traiter les commandes</p>
               </Link>
 
-              <Link to="/restaurant/profile" className="nav-card">
-                <div className="nav-card-icon">🏪</div>
-                <div className="nav-card-content">
-                  <h3>Profil du restaurant</h3>
-                  <p>Modifiez les informations de votre restaurant</p>
-                </div>
-                <div className="nav-card-arrow">→</div>
+              <Link to="/restaurant/profile" className="action-card">
+                <div className="action-icon">🏪</div>
+                <h3>Profil restaurant</h3>
+                <p>Modifier les informations du restaurant</p>
               </Link>
 
-              <div className="nav-card" onClick={() => alert('Fonctionnalité bientôt disponible')}>
-                <div className="nav-card-icon">📊</div>
-                <div className="nav-card-content">
-                  <h3>Analyses détaillées</h3>
-                  <p>Consultez vos statistiques avancées</p>
+              <div className="action-card" onClick={toggleRestaurantStatus}>
+                <div className="action-icon">{isOpen ? '🔴' : '🟢'}</div>
+                <h3>{isOpen ? 'Fermer' : 'Ouvrir'} le restaurant</h3>
+                <p>Changer le statut d'ouverture</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Statistiques mensuelles */}
+          <section className="dashboard-card monthly-stats">
+            <div className="card-header">
+              <h2>📊 Statistiques mensuelles</h2>
+            </div>
+            
+            <div className="monthly-data">
+              <div className="monthly-stat">
+                <h3>{stats.monthlyRevenue.toFixed(2)}€</h3>
+                <p>Revenus du mois</p>
                 </div>
-                <div className="nav-card-arrow">→</div>
+              <div className="monthly-stat">
+                <h3>{stats.totalDishes}</h3>
+                <p>Plats disponibles</p>
               </div>
             </div>
           </section>

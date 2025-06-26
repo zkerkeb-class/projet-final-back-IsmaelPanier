@@ -7,6 +7,7 @@ import {
   Req,
   Put,
   Param,
+  Delete,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.gard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -26,7 +27,14 @@ export class RestaurantController {
     return this.restaurantService.getAllRestaurants();
   }
 
-  // Routes protégées pour les restaurants (doivent venir avant les routes avec paramètres)
+  // Route publique pour créer un restaurant lors de l'inscription
+  @Post('register')
+  async createRestaurantDuringRegistration(@Body() dto: CreateRestaurantDto & { ownerId: string }) {
+    console.log('🏪 Création de restaurant lors de l\'inscription pour ownerId:', dto.ownerId);
+    return this.restaurantService.createRestaurant(dto, dto.ownerId);
+  }
+
+  // Routes protégées pour les restaurants
   @Get('dashboard')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.RESTAURANT)
@@ -60,7 +68,7 @@ export class RestaurantController {
     };
   }
 
-  // Route publique pour obtenir un restaurant par ID (doit venir après les routes spécifiques)
+  // Route publique pour obtenir un restaurant par ID
   @Get(':id')
   async getRestaurantById(@Param('id') id: string) {
     return this.restaurantService.getRestaurantById(id);

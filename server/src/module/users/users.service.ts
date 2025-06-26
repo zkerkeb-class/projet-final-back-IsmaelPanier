@@ -31,11 +31,19 @@ async findByEmail(email: string): Promise<UserDocument | null> {
 
   // Création d'un utilisateur : retourne UserDocument
 async create(registerDto: RegisterDto): Promise<UserDocument> {
+  console.log('usersService.create - Données reçues:', registerDto);
   const user = new this.userModel({
     ...registerDto,
     role: registerDto.role || UserRole.User, 
   });
-  return user.save();
+  try {
+    const savedUser = await user.save();
+    console.log('usersService.create - Utilisateur sauvegardé:', savedUser);
+    return savedUser;
+  } catch (err) {
+    console.error('usersService.create - Erreur lors de la sauvegarde:', err);
+    throw err;
+  }
 }
 
 

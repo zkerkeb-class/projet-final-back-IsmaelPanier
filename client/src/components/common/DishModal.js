@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Notification from './Notification';
+import { toast } from 'react-toastify';
 import './DishModal.css';
 
 const DishModal = ({ isOpen, onClose, onSave, dish, isEdit = false }) => {
@@ -20,13 +20,7 @@ const DishModal = ({ isOpen, onClose, onSave, dish, isEdit = false }) => {
 
   const [errors, setErrors] = useState({});
   const [currentIngredient, setCurrentIngredient] = useState('');
-  const [currentAllergen, setCurrentAllergen] = useState('');
   const [loading, setLoading] = useState(false);
-  const [notification, setNotification] = useState({
-    show: false,
-    message: '',
-    type: 'success'
-  });
 
   const categories = [
     'Entrées', 'Plats principaux', 'Pizzas', 'Burgers', 
@@ -55,7 +49,6 @@ const DishModal = ({ isOpen, onClose, onSave, dish, isEdit = false }) => {
         isSpicy: dish.isSpicy || false
       });
     } else {
-      // Reset form for new dish
       setFormData({
         name: '',
         description: '',
@@ -74,18 +67,6 @@ const DishModal = ({ isOpen, onClose, onSave, dish, isEdit = false }) => {
     setErrors({});
   }, [isEdit, dish, isOpen]);
 
-  const showNotification = (message, type = 'success') => {
-    setNotification({
-      show: true,
-      message,
-      type
-    });
-  };
-
-  const hideNotification = () => {
-    setNotification(prev => ({ ...prev, show: false }));
-  };
-
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -93,7 +74,6 @@ const DishModal = ({ isOpen, onClose, onSave, dish, isEdit = false }) => {
       [name]: type === 'checkbox' ? checked : value
     }));
     
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -155,272 +135,307 @@ const DishModal = ({ isOpen, onClose, onSave, dish, isEdit = false }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
+      toast.error('Veuillez corriger les erreurs dans le formulaire');
       return;
     }
 
-    const dishData = {
-      ...formData,
-      basePrice: parseFloat(formData.basePrice),
-      preparationTime: formData.preparationTime ? parseInt(formData.preparationTime) : null
-    };
+    setLoading(true);
 
-    onSave(dishData);
-    onClose();
+    try {
+      const dishData = {
+        ...formData,
+        basePrice: parseFloat(formData.basePrice),
+        preparationTime: formData.preparationTime ? parseInt(formData.preparationTime) : null
+      };
+
+      await onSave(dishData);
+      
+      toast.success(
+        isEdit 
+          ? `✅ Plat "${formData.name}" modifié avec succès !`
+          : `✅ Plat "${formData.name}" ajouté avec succès !`
+      );
+
+      setTimeout(() => {
+        onClose();
+      }, 2000);
+
+    } catch (error) {
+      console.error('❌ Erreur sauvegarde plat:', error);
+      toast.error(
+        `❌ Erreur lors de la ${isEdit ? 'modification' : 'création'} du plat`
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="dish-modal-overlay" onClick={onClose}>
-      <div className="dish-modal" onClick={e => e.stopPropagation()}>
-        <div className="dish-modal-header">
-          <h2>{isEdit ? 'Modifier le plat' : 'Ajouter un nouveau plat'}</h2>
-          <button className="dish-modal-close" onClick={onClose}>
-            ✕
-          </button>
-        </div>
+    <>
+      <div className="dish-modal-overlay" onClick={onClose}>
+        <div className="dish-modal" onClick={e => e.stopPropagation()}>
+          <div className="dish-modal-header">
+            <h2>{isEdit ? 'Modifier le plat' : 'Ajouter un nouveau plat'}</h2>
+            <button className="dish-modal-close" onClick={onClose}>
+              ✕
+            </button>
+          </div>
 
-        <form onSubmit={handleSubmit} className="dish-modal-form">
-          <div className="dish-modal-content">
-            {/* Basic Information */}
-            <div className="form-section">
-              <h3 className="section-title">Informations de base</h3>
-              
-              <div className="form-row">
+          <form onSubmit={handleSubmit} className="dish-modal-form">
+            <div className="dish-modal-content">
+              {/* Basic Information */}
+              <div className="form-section">
+                <h3 className="section-title">Informations de base</h3>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="name" className="form-label">
+                      Nom du plat *
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className={`uber-input ${errors.name ? 'error' : ''}`}
+                      placeholder="Ex: Pizza Margherita"
+                    />
+                    {errors.name && <span className="error-text">{errors.name}</span>}
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="category" className="form-label">
+                      Catégorie *
+                    </label>
+                    <select
+                      id="category"
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      className={`uber-input ${errors.category ? 'error' : ''}`}
+                    >
+                      <option value="">Sélectionner une catégorie</option>
+                      {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                    {errors.category && <span className="error-text">{errors.category}</span>}
+                  </div>
+                </div>
+
                 <div className="form-group">
-                  <label htmlFor="name" className="form-label">
-                    Nom du plat *
+                  <label htmlFor="description" className="form-label">
+                    Description *
                   </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    className={`uber-input ${errors.description ? 'error' : ''}`}
+                    rows="3"
+                    placeholder="Décrivez votre plat..."
+                  />
+                  {errors.description && <span className="error-text">{errors.description}</span>}
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="basePrice" className="form-label">
+                      Prix (€) *
+                    </label>
+                    <input
+                      type="number"
+                      id="basePrice"
+                      name="basePrice"
+                      value={formData.basePrice}
+                      onChange={handleChange}
+                      className={`uber-input ${errors.basePrice ? 'error' : ''}`}
+                      step="0.01"
+                      min="0"
+                      placeholder="12.50"
+                    />
+                    {errors.basePrice && <span className="error-text">{errors.basePrice}</span>}
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="preparationTime" className="form-label">
+                      Temps de préparation (min)
+                    </label>
+                    <input
+                      type="number"
+                      id="preparationTime"
+                      name="preparationTime"
+                      value={formData.preparationTime}
+                      onChange={handleChange}
+                      className="uber-input"
+                      min="1"
+                      placeholder="15"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Ingredients */}
+              <div className="form-section">
+                <h3 className="section-title">Ingrédients</h3>
+                
+                <div className="ingredient-input">
                   <input
                     type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className={`uber-input ${errors.name ? 'error' : ''}`}
-                    placeholder="Ex: Pizza Margherita"
-                  />
-                  {errors.name && <span className="error-text">{errors.name}</span>}
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="category" className="form-label">
-                    Catégorie *
-                  </label>
-                  <select
-                    id="category"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className={`uber-input ${errors.category ? 'error' : ''}`}
-                  >
-                    <option value="">Sélectionner une catégorie</option>
-                    {categories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                  {errors.category && <span className="error-text">{errors.category}</span>}
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="description" className="form-label">
-                  Description *
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  className={`uber-input ${errors.description ? 'error' : ''}`}
-                  rows="3"
-                  placeholder="Décrivez votre plat..."
-                />
-                {errors.description && <span className="error-text">{errors.description}</span>}
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="basePrice" className="form-label">
-                    Prix (€) *
-                  </label>
-                  <input
-                    type="number"
-                    id="basePrice"
-                    name="basePrice"
-                    value={formData.basePrice}
-                    onChange={handleChange}
-                    className={`uber-input ${errors.basePrice ? 'error' : ''}`}
-                    step="0.01"
-                    min="0"
-                    placeholder="12.50"
-                  />
-                  {errors.basePrice && <span className="error-text">{errors.basePrice}</span>}
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="preparationTime" className="form-label">
-                    Temps de préparation (min)
-                  </label>
-                  <input
-                    type="number"
-                    id="preparationTime"
-                    name="preparationTime"
-                    value={formData.preparationTime}
-                    onChange={handleChange}
+                    value={currentIngredient}
+                    onChange={(e) => setCurrentIngredient(e.target.value)}
                     className="uber-input"
-                    min="1"
-                    placeholder="15"
+                    placeholder="Ajouter un ingrédient..."
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addIngredient())}
                   />
+                  <button
+                    type="button"
+                    onClick={addIngredient}
+                    className="uber-btn uber-btn-secondary"
+                  >
+                    Ajouter
+                  </button>
+                </div>
+
+                <div className="tags-container">
+                  {formData.ingredients.map((ingredient, index) => (
+                    <span key={index} className="tag tag-ingredient">
+                      {ingredient}
+                      <button
+                        type="button"
+                        onClick={() => removeIngredient(ingredient)}
+                        className="tag-remove"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
                 </div>
               </div>
-            </div>
 
-            {/* Ingredients */}
-            <div className="form-section">
-              <h3 className="section-title">Ingrédients</h3>
-              
-              <div className="ingredient-input">
-                <input
-                  type="text"
-                  value={currentIngredient}
-                  onChange={(e) => setCurrentIngredient(e.target.value)}
-                  className="uber-input"
-                  placeholder="Ajouter un ingrédient..."
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addIngredient())}
-                />
-                <button
-                  type="button"
-                  onClick={addIngredient}
-                  className="uber-btn uber-btn-secondary"
-                >
-                  Ajouter
-                </button>
+              {/* Allergens */}
+              <div className="form-section">
+                <h3 className="section-title">Allergènes</h3>
+                
+                <div className="allergens-grid">
+                  {commonAllergens.map(allergen => (
+                    <label key={allergen} className="allergen-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={formData.allergens.includes(allergen)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            addAllergen(allergen);
+                          } else {
+                            removeAllergen(allergen);
+                          }
+                        }}
+                      />
+                      <span className="checkmark"></span>
+                      {allergen}
+                    </label>
+                  ))}
+                </div>
               </div>
 
-              <div className="tags-container">
-                {formData.ingredients.map((ingredient, index) => (
-                  <span key={index} className="tag tag-ingredient">
-                    {ingredient}
-                    <button
-                      type="button"
-                      onClick={() => removeIngredient(ingredient)}
-                      className="tag-remove"
+              {/* Properties */}
+              <div className="form-section">
+                <h3 className="section-title">Propriétés</h3>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="difficulty" className="form-label">
+                      Difficulté
+                    </label>
+                    <select
+                      id="difficulty"
+                      name="difficulty"
+                      value={formData.difficulty}
+                      onChange={handleChange}
+                      className="uber-input"
                     >
-                      ✕
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
+                      <option value="Facile">Facile</option>
+                      <option value="Moyen">Moyen</option>
+                      <option value="Difficile">Difficile</option>
+                    </select>
+                  </div>
+                </div>
 
-            {/* Allergens */}
-            <div className="form-section">
-              <h3 className="section-title">Allergènes</h3>
-              
-              <div className="allergens-grid">
-                {commonAllergens.map(allergen => (
-                  <label key={allergen} className="allergen-checkbox">
+                <div className="checkbox-row">
+                  <label className="checkbox-label">
                     <input
                       type="checkbox"
-                      checked={formData.allergens.includes(allergen)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          addAllergen(allergen);
-                        } else {
-                          removeAllergen(allergen);
-                        }
-                      }}
+                      name="isVegetarian"
+                      checked={formData.isVegetarian}
+                      onChange={handleChange}
                     />
                     <span className="checkmark"></span>
-                    {allergen}
+                    Végétarien
                   </label>
-                ))}
-              </div>
-            </div>
 
-            {/* Properties */}
-            <div className="form-section">
-              <h3 className="section-title">Propriétés</h3>
-              
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="difficulty" className="form-label">
-                    Difficulté
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      name="isSpicy"
+                      checked={formData.isSpicy}
+                      onChange={handleChange}
+                    />
+                    <span className="checkmark"></span>
+                    Épicé
                   </label>
-                  <select
-                    id="difficulty"
-                    name="difficulty"
-                    value={formData.difficulty}
-                    onChange={handleChange}
-                    className="uber-input"
-                  >
-                    <option value="Facile">Facile</option>
-                    <option value="Moyen">Moyen</option>
-                    <option value="Difficile">Difficile</option>
-                  </select>
+
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      name="isAvailable"
+                      checked={formData.isAvailable}
+                      onChange={handleChange}
+                    />
+                    <span className="checkmark"></span>
+                    Disponible
+                  </label>
                 </div>
               </div>
-
-              <div className="checkbox-row">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="isVegetarian"
-                    checked={formData.isVegetarian}
-                    onChange={handleChange}
-                  />
-                  <span className="checkmark"></span>
-                  Végétarien
-                </label>
-
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="isSpicy"
-                    checked={formData.isSpicy}
-                    onChange={handleChange}
-                  />
-                  <span className="checkmark"></span>
-                  Épicé
-                </label>
-
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="isAvailable"
-                    checked={formData.isAvailable}
-                    onChange={handleChange}
-                  />
-                  <span className="checkmark"></span>
-                  Disponible
-                </label>
-              </div>
             </div>
-          </div>
 
-          <div className="dish-modal-footer">
-            <button
-              type="button"
-              onClick={onClose}
-              className="uber-btn uber-btn-secondary"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              className="uber-btn uber-btn-primary"
-            >
-              {isEdit ? 'Modifier le plat' : 'Ajouter le plat'}
-            </button>
-          </div>
-        </form>
+            <div className="dish-modal-footer">
+              <button
+                type="button"
+                onClick={onClose}
+                className="uber-btn uber-btn-secondary"
+                disabled={loading}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="uber-btn uber-btn-primary"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="loading-spinner"></span>
+                    {isEdit ? 'Modification...' : 'Ajout...'}
+                  </>
+                ) : (
+                  isEdit ? 'Modifier le plat' : 'Ajouter le plat'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+
+      {/* Notification intégrée dans le contexte Socket.io */}
+    </>
   );
 };
 

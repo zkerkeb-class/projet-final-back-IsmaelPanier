@@ -15,17 +15,33 @@ export class RestaurantService {
 
   // Récupérer tous les restaurants (pour les utilisateurs)
   async getAllRestaurants(): Promise<Restaurant[]> {
-    const restaurants = await this.restaurantModel.find().exec();
-    console.log('📋 Tous les restaurants récupérés:', restaurants.length);
-    
-    // Si aucun restaurant, créer des données de test
-    if (restaurants.length === 0) {
-      console.log('🔄 Aucun restaurant trouvé, création de données de test...');
-      await this.createSampleRestaurants();
-      return await this.restaurantModel.find().exec();
+    try {
+      console.log('🔍 Récupération de tous les restaurants depuis MongoDB...');
+      const restaurants = await this.restaurantModel.find().exec();
+      console.log('📋 Restaurants trouvés dans la DB:', restaurants.length);
+      
+      // Si aucun restaurant, retourner une liste vide (normal)
+      if (restaurants.length === 0) {
+        console.log('📭 Aucun restaurant trouvé dans la base de données (normal)');
+        return [];
+      }
+      
+      return restaurants;
+    } catch (error) {
+      console.error('❌ Erreur lors de la récupération des restaurants:', error);
+      
+      // En cas d'erreur de base de données, créer des données de test
+      console.log('🔄 Erreur DB, création de données de test...');
+      try {
+        await this.createSampleRestaurants();
+        const testRestaurants = await this.restaurantModel.find().exec();
+        console.log('📋 Données de test créées:', testRestaurants.length);
+        return testRestaurants;
+      } catch (testError) {
+        console.error('❌ Erreur lors de la création des données de test:', testError);
+        return [];
+      }
     }
-    
-    return restaurants;
   }
 
   // Récupérer un restaurant par ID (pour les utilisateurs)
@@ -182,61 +198,102 @@ export class RestaurantService {
       {
         _id: validObjectIds[3], // Utiliser un ObjectId valide
         name: 'Le Bistrot Français',
-        description: 'Cuisine française traditionnelle dans un cadre chaleureux',
+        description: 'Cuisine française traditionnelle dans un cadre authentique',
         cuisine: 'Française',
         address: '321 Rue du Faubourg, 75011 Paris',
-        phone: '+33 1 34 56 78 90',
-        email: 'reservation@bistrotfrancais.fr',
+        phone: '+33 1 55 66 77 88',
+        email: 'bistrot@francais.fr',
         priceRange: 'high',
-        rating: 4.6,
+        rating: 4.7,
         deliveryTime: 35,
         minimumOrder: 25,
         isOpen: true,
         openingHours: {
-          monday: { open: '12:00', close: '14:30', open2: '19:00', close2: '22:30' },
-          tuesday: { open: '12:00', close: '14:30', open2: '19:00', close2: '22:30' },
-          wednesday: { open: '12:00', close: '14:30', open2: '19:00', close2: '22:30' },
-          thursday: { open: '12:00', close: '14:30', open2: '19:00', close2: '22:30' },
-          friday: { open: '12:00', close: '14:30', open2: '19:00', close2: '23:00' },
-          saturday: { open: '12:00', close: '14:30', open2: '19:00', close2: '23:00' },
-          sunday: { open: '12:00', close: '15:00' }
+          monday: { open: '12:00', close: '22:30' },
+          tuesday: { open: '12:00', close: '22:30' },
+          wednesday: { open: '12:00', close: '22:30' },
+          thursday: { open: '12:00', close: '22:30' },
+          friday: { open: '12:00', close: '23:00' },
+          saturday: { open: '12:00', close: '23:00' },
+          sunday: { open: '12:00', close: '21:00' }
         },
         image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400',
         ownerId: new Types.ObjectId('507f1f77bcf86cd799439014') // ID fictif
       },
       {
         _id: validObjectIds[4], // Utiliser un ObjectId valide
-        name: 'Taco Loco',
-        description: 'Tacos mexicains authentiques avec des saveurs épicées',
-        cuisine: 'Mexicaine',
-        address: '654 Rue de la Liberté, 75003 Paris',
-        phone: '+33 1 67 89 01 23',
-        email: 'hola@tacoloco.fr',
-        priceRange: 'low',
-        rating: 4.3,
-        deliveryTime: 18,
-        minimumOrder: 10,
+        name: 'Taj Mahal',
+        description: 'Cuisine indienne authentique avec des épices traditionnelles',
+        cuisine: 'Indienne',
+        address: '654 Rue de la Roquette, 75012 Paris',
+        phone: '+33 1 99 88 77 66',
+        email: 'taj@mahal.fr',
+        priceRange: 'medium',
+        rating: 4.4,
+        deliveryTime: 30,
+        minimumOrder: 18,
         isOpen: true,
         openingHours: {
-          monday: { open: '11:00', close: '22:00' },
-          tuesday: { open: '11:00', close: '22:00' },
-          wednesday: { open: '11:00', close: '22:00' },
-          thursday: { open: '11:00', close: '22:00' },
-          friday: { open: '11:00', close: '23:00' },
-          saturday: { open: '11:00', close: '23:00' },
+          monday: { open: '12:00', close: '22:30' },
+          tuesday: { open: '12:00', close: '22:30' },
+          wednesday: { open: '12:00', close: '22:30' },
+          thursday: { open: '12:00', close: '22:30' },
+          friday: { open: '12:00', close: '23:00' },
+          saturday: { open: '12:00', close: '23:00' },
           sunday: { open: '12:00', close: '21:00' }
         },
-        image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400',
+        image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400',
         ownerId: new Types.ObjectId('507f1f77bcf86cd799439015') // ID fictif
       }
     ];
 
-    for (const restaurantData of sampleRestaurants) {
-      const restaurant = new this.restaurantModel(restaurantData);
-      await restaurant.save();
+    try {
+      await this.restaurantModel.insertMany(sampleRestaurants);
+      console.log('✅ Restaurants de test créés avec succès');
+    } catch (error) {
+      console.error('❌ Erreur lors de la création des restaurants de test:', error);
     }
-    
-    console.log('✅ Restaurants de test créés avec succès');
-    console.log('📋 IDs des restaurants créés:', validObjectIds.map(id => id.toString()));
+  }
+
+  // Supprimer tous les restaurants de test
+  async clearAllRestaurants(): Promise<void> {
+    try {
+      console.log('🗑️ Suppression de tous les restaurants...');
+      const result = await this.restaurantModel.deleteMany({}).exec();
+      console.log(`✅ ${result.deletedCount} restaurants supprimés`);
+    } catch (error) {
+      console.error('❌ Erreur lors de la suppression des restaurants:', error);
+      throw error;
+    }
+  }
+
+  // Supprimer seulement les restaurants de test (avec des ownerId fictifs)
+  async clearTestRestaurants(): Promise<void> {
+    try {
+      console.log('🗑️ Suppression des restaurants de test...');
+      
+      // Liste des ownerId fictifs utilisés dans les tests
+      const testOwnerIds = [
+        '507f1f77bcf86cd799439011',
+        '507f1f77bcf86cd799439012', 
+        '507f1f77bcf86cd799439013',
+        '507f1f77bcf86cd799439014',
+        '507f1f77bcf86cd799439015',
+        '6859bde9131ecca0c8303526',
+        '6859bde9131ecca0c8303528',
+        '6859bde9131ecca0c830352a',
+        '6859bde9131ecca0c830352c',
+        '6859bde9131ecca0c830352e'
+      ];
+
+      const result = await this.restaurantModel.deleteMany({
+        ownerId: { $in: testOwnerIds.map(id => new Types.ObjectId(id)) }
+      }).exec();
+      
+      console.log(`✅ ${result.deletedCount} restaurants de test supprimés`);
+    } catch (error) {
+      console.error('❌ Erreur lors de la suppression des restaurants de test:', error);
+      throw error;
+    }
   }
 }

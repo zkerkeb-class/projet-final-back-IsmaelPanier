@@ -22,6 +22,8 @@ const DishManagement = () => {
       setLoading(true);
       setError('');
       
+      console.log('🔍 Tentative de récupération des plats depuis la base de données...');
+      
       const response = await fetch(`${API_BASE_URL}/dishes/my-dishes`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -29,12 +31,24 @@ const DishManagement = () => {
         }
       });
 
+      console.log('📡 Statut de la réponse:', response.status);
+
       if (response.ok) {
         const data = await response.json();
         setDishes(Array.isArray(data) ? data : []);
-        console.log('✅ Plats chargés:', data);
+        console.log('✅ Plats chargés depuis la base de données:', data);
+      } else if (response.status === 401) {
+        // Erreur d'authentification - pas de données de test
+        console.log('❌ Erreur d\'authentification');
+        setError('Erreur d\'authentification. Veuillez vous reconnecter.');
+        setDishes([]);
+      } else if (response.status === 404) {
+        // Aucun plat trouvé - c'est normal, pas d'erreur
+        console.log('📭 Aucun plat trouvé dans la base de données');
+        setDishes([]);
       } else {
-        // Si pas de plats, utiliser des données d'exemple
+        // Erreur serveur - utiliser des données de test
+        console.log('❌ Erreur serveur, utilisation des données de test');
         const mockDishes = [
           {
             _id: '1',
@@ -58,12 +72,37 @@ const DishManagement = () => {
           }
         ];
         setDishes(mockDishes);
-        console.log('📋 Utilisation des données d\'exemple');
+        setError('Mode démo activé - données de test affichées');
+        console.log('📋 Utilisation des données d\'exemple (mode démo)');
       }
     } catch (err) {
-      console.error('❌ Erreur chargement plats:', err);
-      setError('Erreur de connexion au serveur');
-      setDishes([]);
+      console.error('❌ Erreur de connexion au serveur:', err);
+      // Erreur réseau - utiliser des données de test
+      const mockDishes = [
+        {
+          _id: '1',
+          name: 'Pizza Margherita',
+          description: 'Pizza classique avec tomate, mozzarella et basilic frais',
+          basePrice: 12.50,
+          category: 'Pizzas',
+          isAvailable: true,
+          images: [],
+          createdAt: new Date().toISOString()
+        },
+        {
+          _id: '2',
+          name: 'Burger Classique',
+          description: 'Burger avec steak haché, salade, tomate, cornichons et sauce spéciale',
+          basePrice: 14.90,
+          category: 'Burgers',
+          isAvailable: true,
+          images: [],
+          createdAt: new Date().toISOString()
+        }
+      ];
+      setDishes(mockDishes);
+      setError('Mode démo activé - connexion serveur impossible');
+      console.log('📋 Utilisation des données d\'exemple (erreur réseau)');
     } finally {
       setLoading(false);
     }
@@ -115,7 +154,11 @@ const DishManagement = () => {
           setDishes(prev => prev.map(dish => 
             dish._id === editingDish._id ? updatedDish : dish
           ));
-          console.log('✅ Plat modifié avec succès:', updatedDish);
+          console.log('✅ Plat modifié avec succès dans la DB:', updatedDish);
+        } else if (response.status === 401) {
+          throw new Error('Erreur d\'authentification. Veuillez vous reconnecter.');
+        } else if (response.status === 404) {
+          throw new Error('Plat non trouvé dans la base de données.');
         } else {
           const errorText = await response.text();
           console.error('❌ Erreur modification:', response.status, errorText);
@@ -144,18 +187,23 @@ const DishManagement = () => {
           setTimeout(() => {
             fetchDishes();
           }, 1000);
-        } else {
-          const errorText = await response.text();
-          console.error('❌ Erreur ajout API:', response.status, errorText);
-          
-          // Si l'API ne fonctionne pas, ajouter localement pour la démo
+        } else if (response.status === 401) {
+          throw new Error('Erreur d\'authentification. Veuillez vous reconnecter.');
+        } else if (response.status >= 500) {
+          // Erreur serveur - sauvegarder localement
+          console.log('❌ Erreur serveur, sauvegarde locale');
           const newDish = {
             ...dishData,
             _id: Date.now().toString(),
             createdAt: new Date().toISOString()
           };
           setDishes(prev => [...prev, newDish]);
-          console.log('📋 Plat ajouté localement (API indisponible):', newDish);
+          setError('Mode démo - plat sauvegardé localement (erreur serveur)');
+          console.log('📋 Plat ajouté localement (erreur serveur):', newDish);
+        } else {
+          const errorText = await response.text();
+          console.error('❌ Erreur ajout API:', response.status, errorText);
+          throw new Error(`Erreur ${response.status}: ${errorText}`);
         }
       }
       
@@ -165,7 +213,30 @@ const DishManagement = () => {
       
     } catch (err) {
       console.error('❌ Erreur générale sauvegarde plat:', err);
-      setError(`Erreur lors de la sauvegarde: ${err.message}`);
+      
+      // Si c'est une erreur réseau, sauvegarder localement
+      if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+        console.log('❌ Erreur réseau, sauvegarde locale');
+        const newDish = {
+          ...dishData,
+          _id: editingDish ? editingDish._id : Date.now().toString(),
+          createdAt: new Date().toISOString()
+        };
+        
+        if (editingDish) {
+          setDishes(prev => prev.map(dish => 
+            dish._id === editingDish._id ? newDish : dish
+          ));
+        } else {
+          setDishes(prev => [...prev, newDish]);
+        }
+        
+        setError('Mode démo - plat sauvegardé localement (erreur réseau)');
+        setEditingDish(null);
+        setShowModal(false);
+      } else {
+        setError(`Erreur lors de la sauvegarde: ${err.message}`);
+      }
     }
   };
 
@@ -242,12 +313,12 @@ const DishManagement = () => {
           <div className="app-logo">
             <div className="app-logo-icon">🍽️</div>
             <span>Gestion des Plats</span>
-          </div>
-          
+      </div>
+
           <div className="header-user-info">
             <span className="welcome-text">Restaurant {user?.firstName || 'Admin'}</span>
           </div>
-        </div>
+                </div>
       </header>
 
       {/* Main Content */}
@@ -258,12 +329,12 @@ const DishManagement = () => {
             <h1 className="hero-title">Gérez votre menu</h1>
             <p className="hero-subtitle">Ajoutez, modifiez et organisez vos plats</p>
             
-            <button 
+                <button 
               onClick={handleAddDish}
               className="uber-btn uber-btn-primary hero-btn"
-            >
+                >
               ➕ Ajouter un nouveau plat
-            </button>
+                </button>
           </section>
 
           {error && (
@@ -343,7 +414,7 @@ const DishManagement = () => {
           <section className="dishes-section">
             <div className="section-header">
               <h2>Vos plats ({filteredDishes.length})</h2>
-            </div>
+              </div>
 
             {filteredDishes.length === 0 ? (
               <div className="empty-state">
@@ -372,8 +443,8 @@ const DishManagement = () => {
                       ) : (
                         <div className="dish-placeholder">
                           <span className="dish-placeholder-icon">🍽️</span>
-                        </div>
-                      )}
+        </div>
+      )}
                       <div className="dish-card-overlay">
                         <button 
                           onClick={() => handleEditDish(dish)}
@@ -382,22 +453,22 @@ const DishManagement = () => {
                         >
                           ✏️
                         </button>
-                        <button 
+              <button 
                           onClick={() => handleDeleteDish(dish._id)}
                           className="action-btn delete-btn"
                           title="Supprimer"
-                        >
+              >
                           🗑️
-                        </button>
-                      </div>
-                    </div>
-                    
+              </button>
+            </div>
+              </div>
+
                     <div className="dish-card-content">
                       <div className="dish-card-header">
                         <h3 className="dish-name">{dish.name}</h3>
                         <span className="dish-price">{(dish.basePrice || dish.price || 0).toFixed(2)}€</span>
-                      </div>
-                      
+              </div>
+
                       <p className="dish-description">
                         {dish.description || 'Aucune description'}
                       </p>
@@ -406,7 +477,7 @@ const DishManagement = () => {
                         <span className="dish-category">{dish.category}</span>
                         <div className="availability-toggle">
                           <label className="toggle-switch">
-                            <input
+                  <input
                               type="checkbox"
                               checked={dish.isAvailable}
                               onChange={() => toggleAvailability(dish)}
@@ -416,10 +487,10 @@ const DishManagement = () => {
                           <span className="availability-text">
                             {dish.isAvailable ? 'Disponible' : 'Indisponible'}
                           </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                </div>
+                </div>
+              </div>
+              </div>
                 ))}
               </div>
             )}

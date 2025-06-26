@@ -44,7 +44,7 @@ export class Dish {
   @Prop({ type: [Object], default: [] })
   priceOptions?: PriceOption[]; // Options de prix (petite/grande portion)
 
-  @Prop({ enum: ['Entrée', 'Plat principal', 'Dessert', 'Boisson', 'Accompagnement', 'Menu du jour'] })
+  @Prop({ enum: ['Entrées', 'Plats principaux', 'Pizzas', 'Burgers', 'Sushis', 'Salades', 'Desserts', 'Boissons'] })
   category?: string;
 
   @Prop({ type: [Object], default: [] })

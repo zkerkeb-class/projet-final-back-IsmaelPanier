@@ -43,11 +43,15 @@ const Header = () => {
   };
 
   const getDisplayName = () => {
+    console.log('🔍 getDisplayName - user data:', user);
     if (!user) return 'Compte';
     if (user.name) {
+      console.log('📝 User name found:', user.name);
       const nameParts = user.name.split(' ');
+      console.log('📝 Name parts:', nameParts);
       return nameParts[0] || 'Compte';
     }
+    console.log('📧 Using email as fallback:', user.email);
     return user.email ? user.email.split('@')[0] : 'Compte';
   };
 

@@ -7,9 +7,10 @@ import * as path from 'path';
 import { AuthModule } from './module/auth/auth.module';
 import { UsersModule } from './module/users/users.module';
 import { RestaurantModule } from './module/restaurants/restaurant.module';
-import { DishesModule } from './module/dishes/disches.module';
+import { DishesModule } from './module/dishes/dishes.module';
 import { OrdersModule } from './module/orders/orders.module';
 import { UploadModule } from './module/uploads/upload.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { UploadModule } from './module/uploads/upload.module';
     DishesModule,
     OrdersModule,
     UploadModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

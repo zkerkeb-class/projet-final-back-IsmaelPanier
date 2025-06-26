@@ -43,9 +43,15 @@ export const AuthProvider = ({ children }) => {
             setToken(savedToken);
             console.log('✅ Utilisateur restauré depuis le token:', userData.email);
             setIsFirstVisit(false);
+          } else if (response.status === 401) {
+            // Token invalide - nettoyer silencieusement
+            console.log('🔓 Token expiré ou invalide, nettoyage silencieux...');
+            localStorage.removeItem('token');
+            setToken(null);
+            setUser(null);
           } else {
-            // Token invalide
-            console.log('❌ Token invalide, suppression...');
+            // Autre erreur
+            console.log('❌ Erreur lors de la vérification du token:', response.status);
             localStorage.removeItem('token');
             setToken(null);
             setUser(null);
@@ -76,9 +82,30 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ email, password }),
       });
 
+      console.log('📡 Statut de la réponse login:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Email ou mot de passe incorrect');
+        let errorMessage = 'Email ou mot de passe incorrect';
+        
+        try {
+          const errorData = await response.json();
+          console.log('❌ Données d\'erreur reçues:', errorData);
+          errorMessage = errorData.message || errorMessage;
+        } catch (parseError) {
+          console.log('❌ Erreur de parsing de la réponse d\'erreur');
+        }
+        
+        // Messages d'erreur spécifiques selon le statut
+        if (response.status === 401) {
+          errorMessage = 'Email ou mot de passe incorrect. Vérifiez vos informations.';
+        } else if (response.status === 400) {
+          errorMessage = 'Données de connexion invalides. Veuillez vérifier vos informations.';
+        } else if (response.status >= 500) {
+          errorMessage = 'Erreur du serveur. Veuillez réessayer plus tard.';
+        }
+        
+        console.log('❌ Message d\'erreur final:', errorMessage);
+        return { success: false, error: errorMessage };
       }
 
       const data = await response.json();
@@ -96,8 +123,9 @@ export const AuthProvider = ({ children }) => {
       console.log('✅ Connexion réussie pour:', data.user.email);
       return { success: true, user: data.user, isReturning: wasLoggedIn };
     } catch (error) {
-      console.log('❌ Échec de connexion:', error.message);
-      return { success: false, error: error.message };
+      console.log('❌ Erreur de réseau ou autre:', error.message);
+      const errorMessage = 'Erreur de connexion. Vérifiez votre connexion internet.';
+      return { success: false, error: errorMessage };
     }
   };
 

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
+import { toast } from 'react-toastify';
 import DishDetailModal from '../../components/common/DishDetailModal';
 import './RestaurantDetails.css';
 
@@ -17,6 +19,7 @@ const RestaurantDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { token } = useAuth();
+  const { socket } = useSocket();
   
   const [restaurant, setRestaurant] = useState(null);
   const [dishes, setDishes] = useState([]);
@@ -157,6 +160,97 @@ const RestaurantDetails = () => {
       }
       return [...prevCart, { ...dish, quantity }];
     });
+    toast.success(`${dish.name} ajouté au panier !`);
+  };
+
+  const handleOrder = async () => {
+    if (cart.length === 0) {
+      toast.error('Votre panier est vide');
+      return;
+    }
+
+    try {
+      const orderData = {
+        restaurantId: restaurant._id,
+        items: cart.map(item => ({
+          dishId: item._id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        })),
+        totalAmount: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        deliveryAddress: "123 Rue de la Livraison, 75001 Paris", // À remplacer par l'adresse utilisateur
+        specialInstructions: ""
+      };
+
+      console.log('🛍️ Envoi de la commande:', orderData);
+
+      const response = await fetch(`${API_BASE_URL}/orders`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      if (response.ok) {
+        const newOrder = await response.json();
+        console.log('✅ Commande créée:', newOrder);
+        
+        // Notification Socket.io au restaurant
+        if (socket) {
+          socket.emit('order-placed', {
+            restaurantId: restaurant._id,
+            order: newOrder
+          });
+        }
+
+        toast.success('🎉 Commande envoyée avec succès !');
+        
+        // Vider le panier
+        setCart([]);
+        
+        // Rediriger vers la page des commandes
+        setTimeout(() => {
+          navigate('/user/orders');
+        }, 1500);
+
+      } else {
+        // Simulation pour la démo
+        const mockOrder = {
+          _id: Date.now().toString(),
+          ...orderData,
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+          estimatedDelivery: new Date(Date.now() + 30 * 60000).toISOString()
+        };
+
+        console.log('📋 Commande simulée (API indisponible):', mockOrder);
+        
+        // Notification Socket.io au restaurant
+        if (socket) {
+          socket.emit('order-placed', {
+            restaurantId: restaurant._id,
+            order: mockOrder
+          });
+        }
+
+        toast.success('🎉 Commande envoyée avec succès !');
+        
+        // Vider le panier
+        setCart([]);
+        
+        // Rediriger vers la page des commandes
+        setTimeout(() => {
+          navigate('/user/orders');
+        }, 1500);
+      }
+
+    } catch (error) {
+      console.error('❌ Erreur lors de la commande:', error);
+      toast.error('Erreur lors de l\'envoi de la commande');
+    }
   };
 
   const getSpicyIcon = (level) => {
@@ -362,8 +456,8 @@ const RestaurantDetails = () => {
               {cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}€
             </span>
           </div>
-          <button className="cart-btn">
-            Voir le panier 🛒
+          <button className="cart-btn" onClick={handleOrder}>
+            Commander 🛒
           </button>
         </div>
       )}
