@@ -15,8 +15,8 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return "Vous est bien connecté au backend"', () => {
+      expect(appController.getHello()).toBe('Vous est bien connecté au backend');
     });
   });
 });

@@ -182,6 +182,11 @@ export const AuthProvider = ({ children }) => {
     setIsFirstVisit(true);
   };
 
+  const updateUser = (userData) => {
+    console.log('🔄 Mise à jour des données utilisateur');
+    setUser(userData);
+  };
+
   const value = {
     user,
     token,
@@ -189,6 +194,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    updateUser,
     isAuthenticated: !!user,
     isRestaurant: user?.role === 'restaurant',
     isUser: user?.role === 'user',

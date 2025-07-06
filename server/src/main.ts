@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/exceptions/http-exception/http-exception.filter';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 
@@ -28,11 +28,24 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
   
-  app.useGlobalFilters( new HttpExceptionFilter());
+  app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,        // enlève les propriétés non déclarées dans le DTO
     forbidNonWhitelisted: true, // renvoie une erreur si des propriétés non autorisées sont envoyées
     transform: true,        // transforme automatiquement les payloads en instances de classes DTO
+    transformOptions: {
+      enableImplicitConversion: true, // Permet la conversion automatique des types
+    },
+    exceptionFactory: (errors) => {
+      const messages = errors.map(error => 
+        `${error.property}: ${Object.values(error.constraints || {}).join(', ')}`
+      ).join('; ');
+      return new BadRequestException({
+        code: 'VALIDATION_ERROR',
+        message: messages,
+        details: errors
+      });
+    }
   }));
 
   const port = process.env.PORT ?? 5000;

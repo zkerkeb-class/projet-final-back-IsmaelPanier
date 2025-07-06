@@ -44,7 +44,7 @@ export class Dish {
   @Prop({ type: [Object], default: [] })
   priceOptions?: PriceOption[]; // Options de prix (petite/grande portion)
 
-  @Prop({ enum: ['Entrée', 'Plat principal', 'Dessert', 'Boisson', 'Accompagnement', 'Menu du jour'] })
+  @Prop({ enum: ['Entrées', 'Plats principaux', 'Pizzas', 'Burgers', 'Sushis', 'Salades', 'Desserts', 'Boissons'] })
   category?: string;
 
   @Prop({ type: [Object], default: [] })
@@ -142,6 +142,13 @@ export class Dish {
 
   @Prop({ type: Number, default: 0 })
   viewCount?: number; // Nombre de vues du plat
+
+  // Nouveaux champs ajoutés
+  @Prop()
+  difficulty?: string; // Difficulté de préparation
+
+  @Prop({ default: false })
+  isVegetarian?: boolean; // Si le plat est végétarien
 }
 
 export const DishSchema = SchemaFactory.createForClass(Dish);

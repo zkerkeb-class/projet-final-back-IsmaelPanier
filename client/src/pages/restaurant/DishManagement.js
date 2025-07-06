@@ -21,7 +21,7 @@ const DishManagement = () => {
     try {
       setLoading(true);
       setError('');
-      
+      console.log('📡 Appel API pour charger les plats...');
       const response = await fetch(`${API_BASE_URL}/dishes/my-dishes`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -29,11 +29,14 @@ const DishManagement = () => {
         }
       });
 
+      console.log('📋 Statut de la réponse API:', response.status);
       if (response.ok) {
         const data = await response.json();
         setDishes(Array.isArray(data) ? data : []);
         console.log('✅ Plats chargés:', data);
       } else {
+        const errorText = await response.text();
+        console.error('❌ Erreur API lors du chargement des plats:', response.status, errorText);
         // Si pas de plats, utiliser des données d'exemple
         const mockDishes = [
           {
@@ -61,7 +64,7 @@ const DishManagement = () => {
         console.log('📋 Utilisation des données d\'exemple');
       }
     } catch (err) {
-      console.error('❌ Erreur chargement plats:', err);
+      console.error('❌ Erreur réseau ou autre lors du chargement des plats:', err);
       setError('Erreur de connexion au serveur');
       setDishes([]);
     } finally {
@@ -70,7 +73,19 @@ const DishManagement = () => {
   }, [token]);
 
   useEffect(() => {
+    console.log('👤 Utilisateur connecté:', user);
+    console.log('🔑 Rôle utilisateur:', user?.role);
     fetchDishes();
+  }, [fetchDishes, user]);
+
+  // Recharger les plats à chaque montage de la page
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log('🔄 Page revisitée, rechargement des plats...');
+      fetchDishes();
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, [fetchDishes]);
 
   const filteredDishes = dishes.filter(dish => {
@@ -80,10 +95,35 @@ const DishManagement = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const handleAddDish = () => {
-    setEditingDish(null);
-    setShowModal(true);
+  // Commenting out unused handleAddDish function to fix ESLint warning
+  /*
+  const handleAddDish = async (newDish) => {
+    try {
+      setLoading(true);
+      const restaurantId = user?.restaurantId;
+      console.log('Ajout d\'un plat - restaurantId:', restaurantId);
+      if (!restaurantId) {
+        console.error('Erreur: Aucun restaurantId trouvé pour cet utilisateur.');
+        throw new Error('Aucun restaurantId trouvé');
+      }
+      // Préparer les données du plat
+      const dishData = {
+        ...newDish,
+        restaurantId: restaurantId,
+        stockQuantity: newDish.stockQuantity !== undefined ? Math.max(0, newDish.stockQuantity) : 0,
+        isAvailable: newDish.isAvailable !== undefined ? newDish.isAvailable : true,
+        ingredients: typeof newDish.ingredients === 'string' 
+          ? newDish.ingredients.split(',').map(ingredient => ({ name: ingredient.trim(), quantity: 'N/A', isAllergen: false })) 
+          : newDish.ingredients,
+      };
+      console.log('Données envoyées pour ajout de plat:', dishData);
+      // ... existing code ...
+    } catch (err) {
+      console.error('❌ Erreur générale sauvegarde plat:', err);
+      setError(`Erreur lors de la sauvegarde: ${err.message}`);
+    }
   };
+  */
 
   const handleEditDish = (dish) => {
     setEditingDish(dish);
@@ -99,13 +139,35 @@ const DishManagement = () => {
       if (editingDish) {
         // Modifier un plat existant
         console.log('✏️ Modification du plat:', editingDish._id);
+        
+        // Filtrer les champs autorisés pour la modification
+        const allowedFields = [
+          'name', 'description', 'basePrice', 'category', 'isAvailable', 'images',
+          'ingredients', 'allergens', 'preparationTime', 'difficulty', 'isVegetarian', 'isSpicy',
+          'trackStock', 'stockQuantity', 'minStockAlert', 'isDailySpecial', 'isPromotion',
+          'discountPercentage', 'promotionStartDate', 'promotionEndDate', 'promotionDescription',
+          'calories', 'protein', 'carbs', 'fat', 'customizationOptions', 'addOns',
+          'cookingTime', 'dietaryInfo', 'spiceLevel', 'isPopular', 'rating', 'orderCount',
+          'tags', 'priceOptions'
+        ];
+        
+        // Créer un objet avec seulement les champs autorisés
+        const filteredDishData = {};
+        allowedFields.forEach(field => {
+          if (dishData[field] !== undefined) {
+            filteredDishData[field] = dishData[field];
+          }
+        });
+        
+        console.log('📦 Données filtrées pour modification:', filteredDishData);
+        
         const response = await fetch(`${API_BASE_URL}/dishes/${editingDish._id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify(dishData)
+          body: JSON.stringify(filteredDishData)
         });
 
         console.log('📡 Réponse modification:', response.status);
@@ -124,17 +186,23 @@ const DishManagement = () => {
       } else {
         // Ajouter un nouveau plat
         console.log('➕ Ajout d\'un nouveau plat');
+        console.log('📡 Envoi requête POST à l\'API pour ajout...');
+        // S'assurer que stockQuantity est au moins 0 pour éviter l'erreur de validation
+        const correctedDishData = {
+          ...dishData,
+          stockQuantity: dishData.stockQuantity && dishData.stockQuantity >= 0 ? dishData.stockQuantity : 0
+        };
+        console.log('📦 Données corrigées pour l\'API:', correctedDishData);
         const response = await fetch(`${API_BASE_URL}/dishes`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify(dishData)
+          body: JSON.stringify(correctedDishData)
         });
 
-        console.log('📡 Réponse ajout:', response.status);
-
+        console.log('📋 Statut de la réponse API pour ajout:', response.status);
         if (response.ok) {
           const newDish = await response.json();
           setDishes(prev => [...prev, newDish]);
@@ -175,6 +243,8 @@ const DishManagement = () => {
     }
 
     try {
+      console.log('🗑️ Tentative de suppression du plat:', dishId);
+      console.log('📡 Envoi requête DELETE à l\'API...');
       const response = await fetch(`${API_BASE_URL}/dishes/${dishId}`, {
         method: 'DELETE',
         headers: {
@@ -182,44 +252,62 @@ const DishManagement = () => {
         }
       });
 
-      if (response.ok || response.status === 404) {
+      console.log('📋 Statut de la réponse API pour suppression:', response.status);
+      if (response.ok) {
         setDishes(prev => prev.filter(dish => dish._id !== dishId));
-        console.log('✅ Plat supprimé');
+        console.log('✅ Plat supprimé avec succès');
       } else {
-        throw new Error('Erreur lors de la suppression');
+        const errorText = await response.text();
+        console.error('❌ Erreur lors de la suppression:', response.status, errorText);
+        // Fallback: supprimer localement si API échoue
+        setDishes(prev => prev.filter(dish => dish._id !== dishId));
+        console.log('📋 Plat supprimé localement (API a échoué)');
       }
-    } catch (err) {
-      // Supprimer localement même si l'API ne répond pas
+    } catch (error) {
+      console.error('❌ Erreur réseau ou autre lors de la suppression:', error);
+      // Fallback: supprimer localement en cas d'erreur
       setDishes(prev => prev.filter(dish => dish._id !== dishId));
-      console.log('📋 Plat supprimé localement');
+      console.log('📋 Plat supprimé localement (erreur réseau)');
     }
   };
 
-  const toggleAvailability = async (dish) => {
+  const toggleAvailability = async (dishId, currentStatus) => {
     try {
-      const updatedDish = { ...dish, isAvailable: !dish.isAvailable };
-      
-      const response = await fetch(`${API_BASE_URL}/dishes/${dish._id}`, {
+      console.log('🔄 Changement disponibilité plat:', dishId, 'Statut actuel:', currentStatus);
+      console.log('📡 Envoi requête PUT à l\'API pour disponibilité...');
+      // Mettre à jour uniquement le champ isAvailable
+      const response = await fetch(`${API_BASE_URL}/dishes/${dishId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(updatedDish)
+        body: JSON.stringify({ isAvailable: !currentStatus })
       });
 
-      if (response.ok || response.status === 404) {
-        setDishes(prev => prev.map(d => 
-          d._id === dish._id ? updatedDish : d
+      console.log('📋 Statut de la réponse API pour disponibilité:', response.status);
+      if (response.ok) {
+        const updatedDish = await response.json();
+        setDishes(prev => prev.map(dish => 
+          dish._id === dishId ? { ...dish, isAvailable: updatedDish.isAvailable } : dish
         ));
-        console.log('✅ Disponibilité mise à jour');
+        console.log('✅ Disponibilité mise à jour:', updatedDish.isAvailable);
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Erreur mise à jour disponibilité:', response.status, errorText);
+        // Fallback: mettre à jour localement si API échoue
+        setDishes(prev => prev.map(dish => 
+          dish._id === dishId ? { ...dish, isAvailable: !currentStatus } : dish
+        ));
+        console.log('📋 Disponibilité mise à jour localement (API a échoué)');
       }
-    } catch (err) {
-      // Mettre à jour localement même si l'API ne répond pas
-      setDishes(prev => prev.map(d => 
-        d._id === dish._id ? { ...d, isAvailable: !d.isAvailable } : d
+    } catch (error) {
+      console.error('❌ Erreur réseau ou autre lors de mise à jour disponibilité:', error);
+      // Fallback: mettre à jour localement en cas d'erreur
+      setDishes(prev => prev.map(dish => 
+        dish._id === dishId ? { ...dish, isAvailable: !currentStatus } : dish
       ));
-      console.log('📋 Disponibilité mise à jour localement');
+      console.log('📋 Disponibilité mise à jour localement (erreur réseau)');
     }
   };
 
@@ -259,7 +347,10 @@ const DishManagement = () => {
             <p className="hero-subtitle">Ajoutez, modifiez et organisez vos plats</p>
             
             <button 
-              onClick={handleAddDish}
+              onClick={() => {
+                setEditingDish(null);
+                setShowModal(true);
+              }}
               className="uber-btn uber-btn-primary hero-btn"
             >
               ➕ Ajouter un nouveau plat
@@ -356,7 +447,10 @@ const DishManagement = () => {
                   }
                 </p>
                 <button 
-                  onClick={handleAddDish}
+                  onClick={() => {
+                    setEditingDish(null);
+                    setShowModal(true);
+                  }}
                   className="uber-btn uber-btn-primary"
                 >
                   ➕ Ajouter un plat
@@ -409,7 +503,7 @@ const DishManagement = () => {
                             <input
                               type="checkbox"
                               checked={dish.isAvailable}
-                              onChange={() => toggleAvailability(dish)}
+                              onChange={() => toggleAvailability(dish._id, dish.isAvailable)}
                             />
                             <span className="toggle-slider"></span>
                           </label>

@@ -28,6 +28,7 @@ import OrderTracking from './pages/user/OrderTracking';
 import OrderHistory from './pages/user/OrderHistory';
 import Favorites from './pages/user/Favorites';
 import UserProfile from './pages/user/Profile';
+import Cart from './pages/user/Cart';
 
 // Composants communs
 import Header from './components/common/Header';
@@ -113,6 +114,11 @@ function App() {
                 <Route path="/user/restaurant/:restaurantId/menu" element={
                   <ProtectedRoute requiredRole="user">
                     <RestaurantMenu />
+                  </ProtectedRoute>
+                } />
+                <Route path="/user/cart" element={
+                  <ProtectedRoute requiredRole="user">
+                    <Cart />
                   </ProtectedRoute>
                 } />
                 <Route path="/user/orders" element={

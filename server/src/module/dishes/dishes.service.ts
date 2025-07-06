@@ -16,11 +16,24 @@ export class DishesService {
       console.log('🍽️ Service: Création du plat...');
       console.log('📦 DTO reçu dans le service:', dto);
       console.log('👤 OwnerId reçu dans le service:', ownerId);
+      console.log('🏪 RestaurantId dans le DTO:', dto.restaurantId);
+      console.log('🏪 Type du restaurantId:', typeof dto.restaurantId);
       
-      // Pour l'instant, on utilise le restaurantId du DTO
-      // Le contrôleur s'assurera que c'est le bon restaurant
-      const createdDish = await this.dishModel.create(dto);
+      // S'assurer que le restaurantId est un ObjectId
+      if (dto.restaurantId && !Types.ObjectId.isValid(dto.restaurantId)) {
+        throw new Error('RestaurantId invalide');
+      }
+      
+      // Créer le plat avec les données, en convertissant restaurantId en ObjectId si nécessaire
+      const dishData = {
+        ...dto,
+        restaurantId: dto.restaurantId ? new Types.ObjectId(dto.restaurantId) : undefined
+      };
+      
+      const createdDish = await this.dishModel.create(dishData);
       console.log('✅ Service: Plat créé avec succès:', createdDish);
+      console.log('🏪 RestaurantId sauvegardé:', createdDish.restaurantId);
+      console.log('🏪 Type du restaurantId sauvegardé:', typeof createdDish.restaurantId);
       
       return createdDish;
     } catch (error) {
@@ -45,13 +58,29 @@ export class DishesService {
   async findByRestaurant(restaurantId: string): Promise<Dish[]> {
     try {
       console.log('🔍 Récupération des plats pour restaurantId:', restaurantId);
+      console.log('🔍 Type du restaurantId reçu:', typeof restaurantId);
+      
       if (!Types.ObjectId.isValid(restaurantId)) {
         console.log('❌ restaurantId invalide:', restaurantId);
         return [];
       }
-      const dishes = await this.dishModel.find({ restaurantId }).populate('restaurantId').exec();
+      
+      // Convertir en ObjectId pour s'assurer de la cohérence
+      const objectId = new Types.ObjectId(restaurantId);
+      console.log('🔍 ObjectId converti:', objectId);
+      
+      // Chercher les plats avec l'ObjectId
+      const dishes = await this.dishModel.find({ restaurantId: objectId }).populate('restaurantId').exec();
       console.log('📋 Plats trouvés pour ce restaurant:', dishes.length);
       console.log('📋 Détails des plats:', JSON.stringify(dishes, null, 2));
+      
+      // Si aucun plat trouvé, vérifier s'il y a des plats dans la base
+      if (dishes.length === 0) {
+        const allDishes = await this.dishModel.find().exec();
+        console.log('🔍 Total des plats dans la base:', allDishes.length);
+        console.log('🔍 Tous les plats:', JSON.stringify(allDishes.map(d => ({ id: d._id, restaurantId: d.restaurantId, name: d.name })), null, 2));
+      }
+      
       return dishes;
     } catch (error) {
       console.error('❌ Erreur lors de la récupération des plats du restaurant:', error);

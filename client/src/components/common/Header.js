@@ -9,6 +9,7 @@ const Header = () => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const menuRef = useRef(null);
   const userMenuRef = useRef(null);
 
@@ -25,6 +26,39 @@ const Header = () => {
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Écouter les changements du panier depuis localStorage
+  useEffect(() => {
+    const updateCartCount = () => {
+      try {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const count = cart.reduce((total, item) => total + (item.quantity || 1), 0);
+        setCartCount(count);
+      } catch (error) {
+        console.error('Erreur lors de la lecture du panier:', error);
+        setCartCount(0);
+      }
+    };
+
+    updateCartCount();
+    
+    // Écouter les changements du localStorage
+    const handleStorageChange = (e) => {
+      if (e.key === 'cart') {
+        updateCartCount();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Écouter les événements personnalisés pour les changements de panier
+    window.addEventListener('cartUpdated', updateCartCount);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('cartUpdated', updateCartCount);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -49,6 +83,13 @@ const Header = () => {
       return nameParts[0] || 'Compte';
     }
     return user.email ? user.email.split('@')[0] : 'Compte';
+  };
+
+  const handleCartClick = () => {
+    // Rediriger vers la page du panier ou ouvrir un modal
+    if (isUser) {
+      navigate('/user/cart');
+    }
   };
 
   return (
@@ -80,6 +121,20 @@ const Header = () => {
         <div className="header-actions">
           {/* Thème */}
           <ThemeToggle />
+
+          {/* Panier pour les utilisateurs */}
+          {isAuthenticated && isUser && (
+            <button 
+              className="cart-button"
+              onClick={handleCartClick}
+              title="Voir le panier"
+            >
+              <span className="material-icons">shopping_cart</span>
+              {cartCount > 0 && (
+                <span className="cart-badge">{cartCount}</span>
+              )}
+            </button>
+          )}
 
           {/* Menu utilisateur connecté */}
           {isAuthenticated ? (

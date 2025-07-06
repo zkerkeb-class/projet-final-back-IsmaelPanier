@@ -25,7 +25,7 @@ const RestaurantMenu = () => {
     const fetchRestaurantData = async () => {
       try {
         // Récupérer les infos du restaurant
-        const restaurantResponse = await fetch(`${API_BASE_URL}/restaurant/${restaurantId}`, {
+        const restaurantResponse = await fetch(`${API_BASE_URL}/restaurants/${restaurantId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -45,7 +45,11 @@ const RestaurantMenu = () => {
 
         if (dishesResponse.ok) {
           const dishesData = await dishesResponse.json();
+          console.log('Plats récupérés:', dishesData);
+          console.log('Nombre de plats récupérés:', dishesData.length);
           setDishes(dishesData);
+        } else {
+          console.error('Erreur HTTP lors de la récupération des plats:', dishesResponse.status, dishesResponse.statusText);
         }
       } catch (error) {
         console.error('Erreur lors de la récupération des données:', error);
@@ -57,6 +61,19 @@ const RestaurantMenu = () => {
     fetchRestaurantData();
   }, [restaurantId, token]);
 
+  // Charger le panier depuis localStorage
+  useEffect(() => {
+    try {
+      const savedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+      // Filtrer seulement les articles de ce restaurant
+      const restaurantCart = savedCart.filter(item => item.restaurantId === restaurantId);
+      setCart(restaurantCart);
+    } catch (error) {
+      console.error('Erreur lors du chargement du panier:', error);
+      setCart([]);
+    }
+  }, [restaurantId]);
+
   // Obtenir les catégories uniques
   const categories = ['Tous', ...new Set(dishes.map(dish => dish.category))];
 
@@ -65,45 +82,69 @@ const RestaurantMenu = () => {
     const matchesCategory = selectedCategory === 'Tous' || dish.category === selectedCategory;
     const matchesSearch = dish.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          dish.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch && dish.isAvailable;
+    console.log(`Plat: ${dish.name}, Disponible: ${dish.isAvailable}, Catégorie: ${dish.category}, Correspond à la catégorie: ${matchesCategory}, Correspond à la recherche: ${matchesSearch}`);
+    return matchesCategory && matchesSearch;
   });
 
   // Ajouter au panier
   const addToCart = (dish, quantity = 1, selectedOptions = []) => {
-    const existingItem = cart.find(item => 
+    const cartItem = {
+      dishId: dish._id,
+      restaurantId: restaurantId,
+      name: dish.name,
+      price: dish.basePrice,
+      quantity,
+      selectedOptions,
+      totalPrice: dish.basePrice * quantity,
+      image: dish.images?.[0] || null
+    };
+
+    // Récupérer le panier existant depuis localStorage
+    const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
+    
+    // Vérifier si l'article existe déjà dans le panier
+    const existingItemIndex = existingCart.findIndex(item => 
       item.dishId === dish._id && 
+      item.restaurantId === restaurantId &&
       JSON.stringify(item.selectedOptions) === JSON.stringify(selectedOptions)
     );
 
-    if (existingItem) {
-      setCart(cart.map(item => 
-        item === existingItem 
-          ? { ...item, quantity: item.quantity + quantity }
-          : item
-      ));
+    if (existingItemIndex !== -1) {
+      // Mettre à jour la quantité
+      existingCart[existingItemIndex].quantity += quantity;
+      existingCart[existingItemIndex].totalPrice = existingCart[existingItemIndex].price * existingCart[existingItemIndex].quantity;
     } else {
-      const cartItem = {
-        dishId: dish._id,
-        name: dish.name,
-        price: dish.basePrice,
-        quantity,
-        selectedOptions,
-        totalPrice: dish.basePrice * quantity,
-        image: dish.images?.[0] || null
-      };
-      setCart([...cart, cartItem]);
+      // Ajouter un nouvel article
+      existingCart.push(cartItem);
     }
+
+    // Sauvegarder dans localStorage
+    localStorage.setItem('cart', JSON.stringify(existingCart));
+    
+    // Mettre à jour l'état local
+    setCart(existingCart);
+    
+    // Déclencher l'événement de mise à jour du panier
+    window.dispatchEvent(new Event('cartUpdated'));
+    
+    // Afficher une notification
+    alert(`${dish.name} ajouté au panier !`);
   };
 
   // Modifier la quantité dans le panier
   const updateCartQuantity = (index, newQuantity) => {
     if (newQuantity <= 0) {
-      setCart(cart.filter((_, i) => i !== index));
+      const updatedCart = cart.filter((_, i) => i !== index);
+      setCart(updatedCart);
+      localStorage.setItem('cart', JSON.stringify(updatedCart));
+      window.dispatchEvent(new Event('cartUpdated'));
     } else {
       const updatedCart = [...cart];
       updatedCart[index].quantity = newQuantity;
       updatedCart[index].totalPrice = updatedCart[index].price * newQuantity;
       setCart(updatedCart);
+      localStorage.setItem('cart', JSON.stringify(updatedCart));
+      window.dispatchEvent(new Event('cartUpdated'));
     }
   };
 
@@ -145,12 +186,23 @@ const RestaurantMenu = () => {
 
       if (response.ok) {
         const order = await response.json();
+        
+        // Vider le panier de ce restaurant
+        const allCart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const updatedCart = allCart.filter(item => item.restaurantId !== restaurantId);
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
         setCart([]);
         setShowCart(false);
+        
+        // Déclencher l'événement de mise à jour du panier
+        window.dispatchEvent(new Event('cartUpdated'));
+        
         navigate(`/user/orders/${order._id}`);
+        alert('Commande passée avec succès ! Vous recevrez une confirmation bientôt.');
       }
     } catch (error) {
       console.error('Erreur lors de la commande:', error);
+      alert('Erreur lors de la commande. Veuillez réessayer.');
     }
   };
 
@@ -224,6 +276,33 @@ const RestaurantMenu = () => {
             </button>
           ))}
         </div>
+        <button 
+          onClick={() => {
+            setLoading(true);
+            const fetchRestaurantData = async () => {
+              try {
+                const dishesResponse = await fetch(`${API_BASE_URL}/dishes/restaurant/${restaurantId}`, {
+                  headers: {
+                    'Authorization': `Bearer ${token}`
+                  }
+                });
+                if (dishesResponse.ok) {
+                  const dishesData = await dishesResponse.json();
+                  console.log('Plats mis à jour:', dishesData);
+                  setDishes(dishesData);
+                }
+              } catch (error) {
+                console.error('Erreur lors de la mise à jour des plats:', error);
+              } finally {
+                setLoading(false);
+              }
+            };
+            fetchRestaurantData();
+          }}
+          className="btn btn-primary"
+        >
+          Rafraîchir
+        </button>
       </div>
 
       {/* Menu et Panier */}

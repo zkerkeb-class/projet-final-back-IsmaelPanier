@@ -44,7 +44,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     path: request.url, // URL de la requête ayant échouée
     method: request.method, // Méthode HTTP utilisée (GET, POST, etc.)
     timestamp : new Date().toISOString(), // Horodatage de l'erreur
-
+    ...(process.env.NODE_ENV === 'development' && { stack }) // Stack trace uniquement en développement
    };
 
    // Log detaillé de l'erreur côter serveur (dans les logs NestJS)
@@ -53,8 +53,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
    JSON.stringify(errorResponse, null, 2),
    );
 
-
-  //
-
+   // Envoyer la réponse d'erreur au client
+   response.status(status).json(errorResponse);
    }
   }

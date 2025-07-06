@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Notification from './Notification';
 import './DishModal.css';
 
 const DishModal = ({ isOpen, onClose, onSave, dish, isEdit = false }) => {
@@ -20,13 +19,6 @@ const DishModal = ({ isOpen, onClose, onSave, dish, isEdit = false }) => {
 
   const [errors, setErrors] = useState({});
   const [currentIngredient, setCurrentIngredient] = useState('');
-  const [currentAllergen, setCurrentAllergen] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [notification, setNotification] = useState({
-    show: false,
-    message: '',
-    type: 'success'
-  });
 
   const categories = [
     'Entrées', 'Plats principaux', 'Pizzas', 'Burgers', 
@@ -47,7 +39,9 @@ const DishModal = ({ isOpen, onClose, onSave, dish, isEdit = false }) => {
         category: dish.category || '',
         isAvailable: dish.isAvailable !== undefined ? dish.isAvailable : true,
         images: dish.images || [],
-        ingredients: dish.ingredients || [],
+        ingredients: Array.isArray(dish.ingredients) && dish.ingredients.length > 0 && typeof dish.ingredients[0] === 'object'
+          ? dish.ingredients
+          : [],
         allergens: dish.allergens || [],
         preparationTime: dish.preparationTime || '',
         difficulty: dish.difficulty || 'Facile',
@@ -74,18 +68,6 @@ const DishModal = ({ isOpen, onClose, onSave, dish, isEdit = false }) => {
     setErrors({});
   }, [isEdit, dish, isOpen]);
 
-  const showNotification = (message, type = 'success') => {
-    setNotification({
-      show: true,
-      message,
-      type
-    });
-  };
-
-  const hideNotification = () => {
-    setNotification(prev => ({ ...prev, show: false }));
-  };
-
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -100,19 +82,26 @@ const DishModal = ({ isOpen, onClose, onSave, dish, isEdit = false }) => {
   };
 
   const addIngredient = () => {
-    if (currentIngredient.trim() && !formData.ingredients.includes(currentIngredient.trim())) {
+    const trimmed = currentIngredient.trim();
+    if (
+      trimmed &&
+      !formData.ingredients.some(ing => ing.name.toLowerCase() === trimmed.toLowerCase())
+    ) {
       setFormData(prev => ({
         ...prev,
-        ingredients: [...prev.ingredients, currentIngredient.trim()]
+        ingredients: [
+          ...prev.ingredients,
+          { name: trimmed, quantity: '', isAllergen: false }
+        ]
       }));
       setCurrentIngredient('');
     }
   };
 
-  const removeIngredient = (ingredient) => {
+  const removeIngredient = (ingredientName) => {
     setFormData(prev => ({
       ...prev,
-      ingredients: prev.ingredients.filter(ing => ing !== ingredient)
+      ingredients: prev.ingredients.filter(ing => ing.name !== ingredientName)
     }));
   };
 
@@ -165,7 +154,12 @@ const DishModal = ({ isOpen, onClose, onSave, dish, isEdit = false }) => {
     const dishData = {
       ...formData,
       basePrice: parseFloat(formData.basePrice),
-      preparationTime: formData.preparationTime ? parseInt(formData.preparationTime) : null
+      preparationTime: formData.preparationTime ? parseInt(formData.preparationTime) : null,
+      ingredients: formData.ingredients.map(ing =>
+        typeof ing === 'string'
+          ? { name: ing, quantity: '', isAllergen: false }
+          : ing
+      )
     };
 
     onSave(dishData);
@@ -305,10 +299,10 @@ const DishModal = ({ isOpen, onClose, onSave, dish, isEdit = false }) => {
               <div className="tags-container">
                 {formData.ingredients.map((ingredient, index) => (
                   <span key={index} className="tag tag-ingredient">
-                    {ingredient}
+                    {ingredient.name}
                     <button
                       type="button"
-                      onClick={() => removeIngredient(ingredient)}
+                      onClick={() => removeIngredient(ingredient.name)}
                       className="tag-remove"
                     >
                       ✕

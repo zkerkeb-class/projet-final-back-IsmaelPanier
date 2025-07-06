@@ -34,7 +34,7 @@ const RestaurantList = () => {
       setLoading(true);
       setError('');
       
-      const response = await fetch(`${API_BASE_URL}/restaurant`, {
+      const response = await fetch(`${API_BASE_URL}/restaurants`, {
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
           'Content-Type': 'application/json'

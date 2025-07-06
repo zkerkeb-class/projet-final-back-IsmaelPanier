@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import RestaurantModal from '../../components/common/RestaurantModal';
 import './Dashboard.css';
@@ -28,7 +28,7 @@ const UserDashboard = () => {
       setLoading(true);
       setError('');
       
-      const response = await fetch(`${API_BASE_URL}/restaurant`, {
+      const response = await fetch(`${API_BASE_URL}/restaurants`, {
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
           'Content-Type': 'application/json'

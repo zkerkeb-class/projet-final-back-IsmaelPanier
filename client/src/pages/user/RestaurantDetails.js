@@ -36,7 +36,7 @@ const RestaurantDetails = () => {
       setError('');
 
       // Récupérer les détails du restaurant
-      const restaurantResponse = await fetch(`${API_BASE_URL}/restaurant/${id}`, {
+      const restaurantResponse = await fetch(`${API_BASE_URL}/restaurants/${id}`, {
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
           'Content-Type': 'application/json'
@@ -269,11 +269,36 @@ const RestaurantDetails = () => {
                 </div>
                 <div className="info-item">
                   <span className="info-icon">📞</span>
-                  <span>{typeof restaurant.phone === 'string' ? restaurant.phone : (restaurant.phone || '01 23 45 67 89')}</span>
+                  <span>{restaurant.phone || '01 23 45 67 89'}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-icon">✉️</span>
+                  <span>{restaurant.email || 'contact@restaurant.fr'}</span>
                 </div>
                 <div className="info-item">
                   <span className="info-icon">🕐</span>
-                  <span>Ouvert de 11h30 à 22h30</span>
+                  <span>
+                    {restaurant.openingHours?.monday 
+                      ? `Lun: ${restaurant.openingHours.monday}`
+                      : 'Ouvert de 11h30 à 22h30'
+                    }
+                  </span>
+                </div>
+                {restaurant.deliveryOptions && restaurant.deliveryOptions.length > 0 && (
+                  <div className="info-item">
+                    <span className="info-icon">🚚</span>
+                    <span>{restaurant.deliveryOptions.join(', ')}</span>
+                  </div>
+                )}
+                {restaurant.paymentMethods && restaurant.paymentMethods.length > 0 && (
+                  <div className="info-item">
+                    <span className="info-icon">💳</span>
+                    <span>{restaurant.paymentMethods.join(', ')}</span>
+                  </div>
+                )}
+                <div className="info-item">
+                  <span className="info-icon">💰</span>
+                  <span>Commande minimum: {restaurant.minOrderAmount || 10}€</span>
                 </div>
               </div>
             </div>

@@ -109,134 +109,168 @@ export class RestaurantService {
         name: 'Pizza Palace',
         description: 'Les meilleures pizzas de la ville avec des ingrédients frais et locaux',
         cuisine: 'Italienne',
-        address: '123 Rue de la Paix, 75001 Paris',
+        address: {
+          street: '123 Rue de la Paix',
+          city: 'Paris',
+          postalCode: '75001',
+          country: 'France'
+        },
         phone: '+33 1 23 45 67 89',
         email: 'contact@pizzapalace.fr',
-        priceRange: 'medium',
+        priceRange: 'Moyen',
         rating: 4.5,
         deliveryTime: 30,
-        minimumOrder: 15,
+        minOrderAmount: 15,
         isOpen: true,
         openingHours: {
-          monday: { open: '11:00', close: '23:00' },
-          tuesday: { open: '11:00', close: '23:00' },
-          wednesday: { open: '11:00', close: '23:00' },
-          thursday: { open: '11:00', close: '23:00' },
-          friday: { open: '11:00', close: '00:00' },
-          saturday: { open: '11:00', close: '00:00' },
-          sunday: { open: '12:00', close: '22:00' }
+          monday: '11:00-23:00',
+          tuesday: '11:00-23:00',
+          wednesday: '11:00-23:00',
+          thursday: '11:00-23:00',
+          friday: '11:00-00:00',
+          saturday: '11:00-00:00',
+          sunday: '12:00-22:00'
         },
         image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400',
-        ownerId: new Types.ObjectId('507f1f77bcf86cd799439011') // ID fictif
+        ownerId: new Types.ObjectId('507f1f77bcf86cd799439011'), // ID fictif
+        deliveryOptions: ['Livraison', 'Emporter'],
+        paymentMethods: ['Carte', 'Espèces']
       },
       {
         _id: validObjectIds[1], // Utiliser un ObjectId valide
         name: 'Sushi Express',
         description: 'Sushis frais et authentiques préparés par nos chefs japonais',
         cuisine: 'Japonaise',
-        address: '456 Avenue des Champs, 75008 Paris',
+        address: {
+          street: '456 Avenue des Champs',
+          city: 'Paris',
+          postalCode: '75008',
+          country: 'France'
+        },
         phone: '+33 1 98 76 54 32',
         email: 'info@sushiexpress.fr',
-        priceRange: 'high',
+        priceRange: 'Élevé',
         rating: 4.8,
         deliveryTime: 25,
-        minimumOrder: 20,
+        minOrderAmount: 20,
         isOpen: true,
         openingHours: {
-          monday: { open: '12:00', close: '22:30' },
-          tuesday: { open: '12:00', close: '22:30' },
-          wednesday: { open: '12:00', close: '22:30' },
-          thursday: { open: '12:00', close: '22:30' },
-          friday: { open: '12:00', close: '23:30' },
-          saturday: { open: '12:00', close: '23:30' },
-          sunday: { open: '12:00', close: '21:30' }
+          monday: '12:00-22:30',
+          tuesday: '12:00-22:30',
+          wednesday: '12:00-22:30',
+          thursday: '12:00-22:30',
+          friday: '12:00-23:30',
+          saturday: '12:00-23:30',
+          sunday: '12:00-21:30'
         },
         image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400',
-        ownerId: new Types.ObjectId('507f1f77bcf86cd799439012') // ID fictif
+        ownerId: new Types.ObjectId('507f1f77bcf86cd799439012'), // ID fictif
+        deliveryOptions: ['Livraison', 'Emporter'],
+        paymentMethods: ['Carte', 'Espèces']
       },
       {
         _id: validObjectIds[2], // Utiliser un ObjectId valide
         name: 'Burger House',
         description: 'Burgers gourmets avec des viandes de qualité et des frites maison',
         cuisine: 'Américaine',
-        address: '789 Boulevard Saint-Germain, 75006 Paris',
+        address: {
+          street: '789 Boulevard Saint-Germain',
+          city: 'Paris',
+          postalCode: '75006',
+          country: 'France'
+        },
         phone: '+33 1 45 67 89 01',
         email: 'hello@burgerhouse.fr',
-        priceRange: 'low',
+        priceRange: 'Économique',
         rating: 4.2,
         deliveryTime: 20,
-        minimumOrder: 12,
+        minOrderAmount: 12,
         isOpen: true,
         openingHours: {
-          monday: { open: '11:30', close: '22:00' },
-          tuesday: { open: '11:30', close: '22:00' },
-          wednesday: { open: '11:30', close: '22:00' },
-          thursday: { open: '11:30', close: '22:00' },
-          friday: { open: '11:30', close: '23:00' },
-          saturday: { open: '11:30', close: '23:00' },
-          sunday: { open: '12:00', close: '21:00' }
+          monday: '11:30-22:00',
+          tuesday: '11:30-22:00',
+          wednesday: '11:30-22:00',
+          thursday: '11:30-22:00',
+          friday: '11:30-23:00',
+          saturday: '11:30-23:00',
+          sunday: '12:00-21:00'
         },
         image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400',
-        ownerId: new Types.ObjectId('507f1f77bcf86cd799439013') // ID fictif
+        ownerId: new Types.ObjectId('507f1f77bcf86cd799439013'), // ID fictif
+        deliveryOptions: ['Livraison', 'Emporter'],
+        paymentMethods: ['Carte', 'Espèces']
       },
       {
         _id: validObjectIds[3], // Utiliser un ObjectId valide
         name: 'Le Bistrot Français',
         description: 'Cuisine française traditionnelle dans un cadre chaleureux',
         cuisine: 'Française',
-        address: '321 Rue du Faubourg, 75011 Paris',
+        address: {
+          street: '321 Rue du Faubourg',
+          city: 'Paris',
+          postalCode: '75011',
+          country: 'France'
+        },
         phone: '+33 1 34 56 78 90',
         email: 'reservation@bistrotfrancais.fr',
-        priceRange: 'high',
+        priceRange: 'Élevé',
         rating: 4.6,
         deliveryTime: 35,
-        minimumOrder: 25,
+        minOrderAmount: 25,
         isOpen: true,
         openingHours: {
-          monday: { open: '12:00', close: '14:30', open2: '19:00', close2: '22:30' },
-          tuesday: { open: '12:00', close: '14:30', open2: '19:00', close2: '22:30' },
-          wednesday: { open: '12:00', close: '14:30', open2: '19:00', close2: '22:30' },
-          thursday: { open: '12:00', close: '14:30', open2: '19:00', close2: '22:30' },
-          friday: { open: '12:00', close: '14:30', open2: '19:00', close2: '23:00' },
-          saturday: { open: '12:00', close: '14:30', open2: '19:00', close2: '23:00' },
-          sunday: { open: '12:00', close: '15:00' }
+          monday: '12:00-14:30, 19:00-22:30',
+          tuesday: '12:00-14:30, 19:00-22:30',
+          wednesday: '12:00-14:30, 19:00-22:30',
+          thursday: '12:00-14:30, 19:00-22:30',
+          friday: '12:00-14:30, 19:00-23:00',
+          saturday: '12:00-14:30, 19:00-23:00',
+          sunday: 'Fermé'
         },
         image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400',
-        ownerId: new Types.ObjectId('507f1f77bcf86cd799439014') // ID fictif
+        ownerId: new Types.ObjectId('507f1f77bcf86cd799439014'), // ID fictif
+        deliveryOptions: ['Livraison'],
+        paymentMethods: ['Carte', 'Espèces']
       },
       {
         _id: validObjectIds[4], // Utiliser un ObjectId valide
-        name: 'Taco Loco',
-        description: 'Tacos mexicains authentiques avec des saveurs épicées',
-        cuisine: 'Mexicaine',
-        address: '654 Rue de la Liberté, 75003 Paris',
-        phone: '+33 1 67 89 01 23',
-        email: 'hola@tacoloco.fr',
-        priceRange: 'low',
-        rating: 4.3,
-        deliveryTime: 18,
-        minimumOrder: 10,
+        name: 'Taj Mahal',
+        description: 'Cuisine indienne épicée et authentique',
+        cuisine: 'Indienne',
+        address: {
+          street: '654 Rue de la Roquette',
+          city: 'Paris',
+          postalCode: '75012',
+          country: 'France'
+        },
+        phone: '+33 1 99 88 77 66',
+        email: 'taj.mahal@example.com',
+        priceRange: 'Moyen',
+        rating: 4.4,
+        deliveryTime: 25,
+        minOrderAmount: 18,
         isOpen: true,
         openingHours: {
-          monday: { open: '11:00', close: '22:00' },
-          tuesday: { open: '11:00', close: '22:00' },
-          wednesday: { open: '11:00', close: '22:00' },
-          thursday: { open: '11:00', close: '22:00' },
-          friday: { open: '11:00', close: '23:00' },
-          saturday: { open: '11:00', close: '23:00' },
-          sunday: { open: '12:00', close: '21:00' }
+          monday: '12:00-14:30, 19:00-22:30',
+          tuesday: '12:00-14:30, 19:00-22:30',
+          wednesday: '12:00-14:30, 19:00-22:30',
+          thursday: '12:00-14:30, 19:00-22:30',
+          friday: '12:00-14:30, 19:00-23:00',
+          saturday: '12:00-23:00',
+          sunday: '12:00-21:00'
         },
-        image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400',
-        ownerId: new Types.ObjectId('507f1f77bcf86cd799439015') // ID fictif
+        image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400',
+        ownerId: new Types.ObjectId('507f1f77bcf86cd799439015'), // ID fictif
+        deliveryOptions: ['Livraison', 'Emporter'],
+        paymentMethods: ['Carte', 'Espèces']
       }
     ];
 
-    for (const restaurantData of sampleRestaurants) {
-      const restaurant = new this.restaurantModel(restaurantData);
-      await restaurant.save();
+    try {
+      await this.restaurantModel.insertMany(sampleRestaurants);
+      console.log('✅ Restaurants de test créés avec succès');
+    } catch (error) {
+      console.error('❌ Erreur lors de la création des restaurants de test:', error);
     }
-    
-    console.log('✅ Restaurants de test créés avec succès');
-    console.log('📋 IDs des restaurants créés:', validObjectIds.map(id => id.toString()));
   }
 }
