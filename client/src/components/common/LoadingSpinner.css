@@ -1,0 +1,129 @@
+.loading-spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+}
+
+.loading-spinner {
+  position: relative;
+  display: inline-block;
+}
+
+.spinner-ring {
+  position: absolute;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1.2s linear infinite;
+}
+
+.spinner-ring:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.spinner-ring:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.spinner-ring:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Tailles */
+.spinner-small .spinner-ring {
+  width: 16px;
+  height: 16px;
+  border-top-color: currentColor;
+}
+
+.spinner-medium .spinner-ring {
+  width: 24px;
+  height: 24px;
+  border-top-color: currentColor;
+}
+
+.spinner-large .spinner-ring {
+  width: 32px;
+  height: 32px;
+  border-top-color: currentColor;
+}
+
+.spinner-xl .spinner-ring {
+  width: 48px;
+  height: 48px;
+  border-top-color: currentColor;
+}
+
+/* Couleurs */
+.spinner-primary {
+  color: var(--primary-color);
+}
+
+.spinner-secondary {
+  color: var(--secondary-color);
+}
+
+.spinner-success {
+  color: var(--success-color);
+}
+
+.spinner-warning {
+  color: var(--warning-color);
+}
+
+.spinner-error {
+  color: var(--error-color);
+}
+
+.spinner-white {
+  color: var(--white);
+}
+
+.spinner-dark {
+  color: var(--text-primary);
+}
+
+.loading-text {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin: 0;
+  text-align: center;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Page loader spécifique */
+.page-loader {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-lg);
+}
+
+.page-loader .loading-text {
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .spinner-xl .spinner-ring {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .spinner-large .spinner-ring {
+    width: 28px;
+    height: 28px;
+  }
+} 
